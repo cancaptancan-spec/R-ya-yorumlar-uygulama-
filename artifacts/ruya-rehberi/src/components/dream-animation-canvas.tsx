@@ -318,6 +318,7 @@ export type DreamAnimationCanvasProps = {
   className?: string;
   showCaption?: boolean;
   showBadge?: boolean;
+  paused?: boolean;
 };
 
 export function DreamAnimationCanvas({
@@ -325,6 +326,7 @@ export function DreamAnimationCanvas({
   className = '',
   showCaption = true,
   showBadge = true,
+  paused = false,
 }: DreamAnimationCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -360,26 +362,26 @@ export function DreamAnimationCanvas({
 
     const render = (now: number) => {
       if (!startTime) startTime = now;
-      const time = reducedMotion ? 0 : (now - startTime) / 1000;
+      const time = reducedMotion || paused ? 0 : (now - startTime) / 1000;
       drawDreamSceneFrame(ctx, theme, cssWidth, cssHeight, time);
-      if (!reducedMotion) frameId = window.requestAnimationFrame(render);
+      if (!reducedMotion && !paused) frameId = window.requestAnimationFrame(render);
     };
 
     const observer = new ResizeObserver(() => {
       resize();
-      if (reducedMotion) return;
+      if (reducedMotion || paused) return;
       window.cancelAnimationFrame(frameId);
       frameId = window.requestAnimationFrame(render);
     });
     observer.observe(canvas);
     resize();
-    if (!reducedMotion) frameId = window.requestAnimationFrame(render);
+    if (!reducedMotion && !paused) frameId = window.requestAnimationFrame(render);
 
     return () => {
       observer.disconnect();
       window.cancelAnimationFrame(frameId);
     };
-  }, [theme, reducedMotion]);
+  }, [theme, reducedMotion, paused]);
 
   const caption = typeof theme?.sceneCaption === 'string' ? theme.sceneCaption.trim() : '';
 

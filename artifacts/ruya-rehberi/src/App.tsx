@@ -10,6 +10,7 @@ import {
   drawDreamSceneFrame,
   type DreamSceneTheme,
 } from '@/components/dream-animation-canvas';
+import { DreamVideoScene } from '@/components/dream-video-scene';
 import {
   ArrowDown,
   ArrowRight,
@@ -461,9 +462,12 @@ function Home() {
                 </div>
               )}
               {interpretation && mode === 'creator' && (
-                <div className="fade-up flex justify-center" data-testid="panel-tiktok-yorumu">
-                  <CreatorPortrait dream={dream} username={username} interpretation={interpretation} theme={interpretation.sceneTheme} nightmare={dreamType === 'kabus' ? nightmareAdvice : null} />
-                </div>
+                <DreamVideoScene
+                  dream={dream}
+                  username={username}
+                  interpretation={interpretation}
+                  nightmareAdvice={dreamType === 'kabus' ? nightmareAdvice : null}
+                />
               )}
               {interpretation && (
                 <div className="share-actions mt-5 border-t pt-5">
@@ -550,50 +554,6 @@ function drawCanvasParagraph(
   lines.forEach((lineText, index) => context.fillText(lineText, x, y + index * lineHeight));
   context.textAlign = previousAlign;
   return y + lines.length * lineHeight;
-}
-
-function CreatorPortrait({ dream, username, interpretation, theme, nightmare }: {
-  dream: string;
-  username: string;
-  interpretation: DreamInterpretation;
-  theme: DreamSceneTheme;
-  nightmare: string | null;
-}) {
-  return (
-    <article className="creator-card portrait-frame relative flex w-full max-w-[310px] flex-col overflow-hidden rounded-[25px]" data-testid="card-dikey-paylasim">
-      <div className="creator-pattern absolute inset-0" />
-      <div className="creator-scene-wrap relative h-[37%] min-h-0 shrink-0 overflow-hidden">
-        <DreamAnimationCanvas theme={theme} className="cinematic-scene h-full rounded-none" showCaption={false} />
-        <div className="creator-scene-fade absolute inset-x-0 bottom-0 h-20" />
-        <div className="creator-scene-caption absolute bottom-3 left-5 right-5 flex items-center justify-between">
-          <span className="text-[8px] font-semibold uppercase tracking-[.2em] text-[#dfcf9a]">Rüya üzerine bir yansıma</span>
-          <MoonStar size={14} className="text-[#dfcf9a]" strokeWidth={1.4} />
-        </div>
-      </div>
-      <div className="creator-copy relative flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-4 pt-1">
-        <p className="creator-quote text-[9px] leading-[1.45]">
-          <span className="text-[#d7c47e]">“</span>{dream}<span className="text-[#d7c47e]">”</span>
-        </p>
-        <p className="mt-2 text-[9px] font-semibold text-[#d8c57f]">{username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Bir takipçinin rüyası'}</p>
-        <div className="my-3 h-px w-full bg-[#d0b966]/35" />
-        {nightmare && (
-          <div className="mb-2 rounded-lg border border-[#d0bc7d]/30 bg-[#e3d5a3]/10 px-2.5 py-2">
-            <p className="mb-1 text-[7px] font-bold uppercase tracking-[.13em] text-[#e6d494]">Kâbus sonrası sünnet adabı</p>
-            <p className="line-clamp-3 text-[8px] leading-[1.45] text-[#e8e0c5]">{nightmare}</p>
-          </div>
-        )}
-        <h3 className="serif text-[15px] leading-tight text-[#e3d292]">Bir düşünme ihtimali</h3>
-        <p className="mt-1.5 text-[8px] leading-[1.4] text-[#e1e5d9]/85">{interpretation.detailedInterpretation}</p>
-        <div className="mt-auto pt-2">
-          <p className="text-[7px] font-bold uppercase tracking-[.16em] text-[#d8c57f]">Dua</p>
-          <p className="mt-1 text-[8px] leading-[1.4] text-[#e1e5d9]/85">{interpretation.dua}</p>
-          <p className="mt-2 text-[7px] font-bold uppercase tracking-[.16em] text-[#d8c57f]">Esma ve zikir</p>
-          <p className="mt-1 text-[7px] leading-[1.35] text-[#e1e5d9]/85">{interpretation.asmaSuggestion} {interpretation.dhikr}</p>
-          <p className="mt-2 border-t border-[#d0b966]/25 pt-2 text-[7px] leading-[1.45] text-[#c4cbbb]">Bu yansıma kesin bilgi veya dinî hüküm değildir.</p>
-        </div>
-      </div>
-    </article>
-  );
 }
 
 function Router() {
