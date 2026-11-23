@@ -13,10 +13,12 @@ import {
 import {
   ArrowDown,
   ArrowRight,
-  Check,
+  BookOpenText,
   CircleHelp,
+  Compass,
   Clock3,
   Feather,
+  HeartHandshake,
   MoonStar,
   Sparkles,
   Sun,
@@ -135,47 +137,47 @@ function Home() {
       context.font = '600 42px "Playfair Display", Georgia, serif';
       drawCanvasParagraph(context, 'İslami Rüya Tabiri & Manevi Rehber', 540, 112, 856, 54, 2, 'center');
       context.fillStyle = '#e1d7bd';
-      context.font = '400 20px "DM Sans", sans-serif';
+      context.font = '400 20px "Plus Jakarta Sans", sans-serif';
       drawCanvasParagraph(context, username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Rüya üzerine bir yansıma', 540, 165, 856, 30, 1, 'center');
       context.textAlign = 'left';
       context.fillStyle = '#e5d08c';
-      context.font = '600 17px "DM Sans", sans-serif';
+      context.font = '600 17px "Plus Jakarta Sans", sans-serif';
       context.fillText('CANLI SAHNE', 80, 485);
       context.fillStyle = '#f4ecd7';
-      context.font = '400 20px "DM Sans", sans-serif';
+      context.font = '400 20px "Plus Jakarta Sans", sans-serif';
       drawCanvasParagraph(context, interpretation.sceneTheme.sceneCaption, 80, 520, 920, 28, 2);
       let y = sceneHeight + 68;
 
       context.fillStyle = '#e3d292';
-      context.font = '600 24px "DM Sans", sans-serif';
+      context.font = '600 24px "Plus Jakarta Sans", sans-serif';
       context.fillText('RÜYANIZ', 112, y);
       y += 42;
       context.fillStyle = '#f4efdf';
-      context.font = '400 25px "DM Sans", sans-serif';
+      context.font = '400 25px "Plus Jakarta Sans", sans-serif';
       y = drawCanvasParagraph(context, `“${dream}”`, 112, y, 856, 36, 4) + 32;
 
       context.fillStyle = '#e3d292';
-      context.font = '600 24px "DM Sans", sans-serif';
+      context.font = '600 24px "Plus Jakarta Sans", sans-serif';
       context.fillText('RÜYANIN HİKMETİ', 112, y);
       y += 40;
       context.fillStyle = '#f4efdf';
-      context.font = '400 24px "DM Sans", sans-serif';
+      context.font = '400 24px "Plus Jakarta Sans", sans-serif';
       y = drawCanvasParagraph(context, interpretation.wisdom, 112, y, 856, 35, 4) + 30;
 
       context.fillStyle = '#e3d292';
-      context.font = '600 24px "DM Sans", sans-serif';
+      context.font = '600 24px "Plus Jakarta Sans", sans-serif';
       context.fillText('TABİR ÜZERİNE', 112, y);
       y += 40;
       context.fillStyle = '#f4efdf';
-      context.font = '400 23px "DM Sans", sans-serif';
+      context.font = '400 23px "Plus Jakarta Sans", sans-serif';
       y = drawCanvasParagraph(context, interpretation.detailedInterpretation, 112, y, 856, 34, 8) + 30;
 
       context.fillStyle = '#e3d292';
-      context.font = '600 24px "DM Sans", sans-serif';
+      context.font = '600 24px "Plus Jakarta Sans", sans-serif';
       context.fillText('DUA VE MANEVİ TAVSİYE', 112, y);
       y += 40;
       context.fillStyle = '#f4efdf';
-      context.font = '400 22px "DM Sans", sans-serif';
+      context.font = '400 22px "Plus Jakarta Sans", sans-serif';
       y = drawCanvasParagraph(context, `${interpretation.dua} ${interpretation.asmaSuggestion} ${interpretation.dhikr}`, 112, y, 856, 32, 6);
 
       context.textAlign = 'center';
@@ -183,7 +185,7 @@ function Home() {
       context.font = '500 25px "Playfair Display", Georgia, serif';
       context.fillText('Hayra yorunuz ki hayır olsun', canvas.width / 2, 1820);
       context.fillStyle = '#d6d4c8';
-      context.font = '400 17px "DM Sans", sans-serif';
+      context.font = '400 17px "Plus Jakarta Sans", sans-serif';
       context.fillText('Bu yansıma kesin bilgi veya dinî hüküm değildir.', canvas.width / 2, 1860);
 
       const imageUrl = canvas.toDataURL('image/png');
@@ -228,116 +230,141 @@ function Home() {
     'Peygamberimizin tavsiyesine uygun olarak Allah’a sığınabilir, sol tarafınıza hafifçe üç kez üfleyebilir ve bu rüyayı paylaşmamayı tercih edebilirsiniz.';
 
   return (
-    <main className="min-h-[100dvh] bg-[#f3f0e7] text-[#183b35]">
-      <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-10">
-        <a href="/" className="flex items-center gap-3" aria-label="Rüya Rehberi ana sayfa">
-          <span className="grid h-11 w-11 place-items-center rounded-full border border-[#c8b477] bg-[#173d35] text-[#e7d39a]">
+    <main className="ruya-app relative min-h-[100dvh] overflow-hidden">
+      <div className="ambient-motes" aria-hidden="true" />
+      <header className="site-header relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-10">
+        <a href="/" className="brand-lockup flex items-center gap-3" aria-label="Rüya Rehberi ana sayfa">
+          <span className="brand-mark grid h-11 w-11 place-items-center rounded-full">
             <MoonStar size={20} strokeWidth={1.5} />
           </span>
           <span>
-            <span className="serif block text-[19px] leading-none tracking-tight">Rüya Rehberi</span>
-            <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[.24em] text-[#71817a]">Sükûnetle düşünmek için</span>
+            <span className="brand-title serif block text-[19px] leading-none tracking-tight">Rüya Rehberi</span>
+            <span className="brand-kicker mt-1 block text-[9px] font-semibold uppercase tracking-[.24em]">Sükûnetle düşünmek için</span>
           </span>
         </a>
-        <div className="hidden items-center gap-2 text-xs text-[#66756e] sm:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#a48c4c]" />
+        <div className="header-note hidden items-center gap-2 text-xs sm:flex">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#d5b76b]" />
           Özel ve kişisel bir alan
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[#123b34] text-[#f6f1e3]">
-        <div className="geometry absolute inset-0 opacity-40" />
-        <div className="absolute -right-24 -top-44 h-[440px] w-[440px] rounded-full border border-[#d2b96f]/20" />
-        <div className="absolute -right-8 -top-28 h-[330px] w-[330px] rounded-full border border-[#d2b96f]/15" />
-        <div className="relative mx-auto grid max-w-7xl gap-8 px-5 pb-12 pt-12 md:grid-cols-[1.1fr_.9fr] md:items-end md:px-10 md:pb-16 md:pt-[68px]">
-          <div className="max-w-2xl">
-            <div className="mb-5 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[.24em] text-[#d9c57f]">
-              <span className="h-px w-8 bg-[#d9c57f]" /> Hayırlı Vakitler
+      <section className="hero-cover relative isolate overflow-hidden">
+        <div className="hero-glow hero-glow--emerald" aria-hidden="true" />
+        <div className="hero-glow hero-glow--indigo" aria-hidden="true" />
+        <div className="hero-mandala-shell" aria-hidden="true">
+          <svg className="hero-mandala" viewBox="0 0 600 600" fill="none">
+            <g stroke="currentColor" strokeWidth="0.8">
+              <circle cx="300" cy="300" r="275" />
+              <circle cx="300" cy="300" r="238" />
+              <circle cx="300" cy="300" r="164" />
+              <circle cx="300" cy="300" r="126" />
+              <path d="M300 20 348 252 580 300 348 348 300 580 252 348 20 300 252 252Z" />
+              <path d="m300 62 74 164 164 74-164 74-74 164-74-164-164-74 164-74Z" />
+              <path d="M300 112 344 256 488 300 344 344 300 488 256 344 112 300 256 256Z" />
+              <path d="M300 25v550M25 300h550M105 105l390 390M495 105 105 495" />
+              <path d="M300 136c38 57 57 126 0 164-57-38-57-107 0-164Zm164 164c-57 38-126 57-164 0 38-57 107-57 164 0ZM300 464c-38-57-57-126 0-164 57 38 57 107 0 164ZM136 300c57-38 126-57 164 0-38 57-107 57-164 0Z" />
+              <path d="m300 205 95 95-95 95-95-95 95-95Z" />
+            </g>
+            <g fill="currentColor" opacity=".74">
+              <circle cx="300" cy="25" r="3" /><circle cx="575" cy="300" r="3" />
+              <circle cx="300" cy="575" r="3" /><circle cx="25" cy="300" r="3" />
+              <circle cx="105" cy="105" r="2.5" /><circle cx="495" cy="105" r="2.5" />
+              <circle cx="495" cy="495" r="2.5" /><circle cx="105" cy="495" r="2.5" />
+            </g>
+          </svg>
+        </div>
+        <div className="hero-inner relative mx-auto grid max-w-7xl gap-10 px-5 pb-14 pt-12 md:grid-cols-[1.12fr_.88fr] md:items-center md:px-10 md:pb-20 md:pt-[76px]">
+          <div className="hero-copy max-w-3xl">
+            <div className="hero-eyebrow mb-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[.26em]">
+              <span className="hero-eyebrow-line h-px w-8" /> Hayırlı Vakitler
+              <Sparkles size={12} className="hero-eyebrow-star" />
             </div>
-            <h1 className="serif max-w-[670px] text-[38px] leading-[1.12] tracking-[-.035em] sm:text-[50px] md:text-[58px]">
-              İslami Rüya Tabiri<br />
-              <span className="text-[#d9c57f]">&amp; Manevi Rehber</span>
+            <h1 className="hero-title serif max-w-[760px] text-[42px] leading-[1.08] tracking-[-.04em] sm:text-[58px] md:text-[72px]">
+              İslami Rüya Tabiri
+              <span className="hero-title-accent mt-1 block">&amp; Manevi Rehber</span>
             </h1>
-            <p className="mt-5 max-w-lg text-sm leading-7 text-[#e1e5d9]/80 md:text-[15px]">
+            <p className="hero-description mt-6 max-w-xl text-sm leading-7 md:text-[15px]">
               Bir rüya gördünüz. Biraz üzerinde duralım. İslami geleneğe saygılı, sembollere açık bir yansıma; geleceği haber vermez, düşünmek için sakin bir alan sunar.
             </p>
-            <a href="#ruya-formu" className="mt-7 inline-flex items-center gap-2 text-xs font-semibold text-[#eadba9] transition-colors hover:text-white">
-              Yansımaya başlayın <ArrowDown size={14} />
+            <a href="#ruya-formu" className="hero-link mt-8 inline-flex items-center gap-3 text-xs font-semibold">
+              Yansımaya başlayın <span className="hero-link-icon"><ArrowDown size={14} /></span>
             </a>
           </div>
-          <div className="hidden justify-end md:flex">
-            <div className="relative mr-6 h-[236px] w-[236px] rounded-full border border-[#d2b96f]/30 p-4">
-              <div className="absolute inset-7 rounded-full border border-[#d2b96f]/20" />
-              <div className="geometry grid h-full w-full place-items-center rounded-full bg-[#1a4a40]">
-                <div className="grid h-[112px] w-[112px] place-items-center rounded-full border border-[#d9c57f]/50 bg-[#173f37] text-[#e5d49c]">
-                  <MoonStar size={49} strokeWidth={1} />
-                </div>
+          <div className="hero-emblem-wrap relative flex justify-center md:justify-end">
+            <div className="hero-emblem">
+              <div className="hero-emblem-ring hero-emblem-ring--outer" />
+              <div className="hero-emblem-ring hero-emblem-ring--inner" />
+              <div className="hero-emblem-core">
+                <MoonStar size={48} strokeWidth={1} />
+                <span className="hero-emblem-caption">Sakin bir<br />tefekkür</span>
               </div>
-              <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#123b34] px-3 text-[10px] uppercase tracking-[.2em] text-[#d9c57f]">Sakin bir tefekkür</span>
+              <span className="hero-emblem-orbit hero-emblem-orbit--one" />
+              <span className="hero-emblem-orbit hero-emblem-orbit--two" />
             </div>
           </div>
         </div>
+        <div className="hero-baseline" aria-hidden="true" />
       </section>
 
-      <section id="ruya-formu" className="mx-auto max-w-7xl px-4 pb-20 pt-7 md:px-10 md:pt-9">
+      <section id="ruya-formu" className="dream-workspace mx-auto max-w-7xl px-4 pb-20 pt-8 md:px-10 md:pt-12">
         <div className="mx-auto max-w-[960px]">
-          <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div className="workspace-head mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#987f3d]">İlk adım</p>
-              <h2 className="serif mt-1 text-[27px] text-[#183b35]">Rüyanızı kendi kelimelerinizle anlatın</h2>
+              <p className="section-eyebrow text-[10px] font-bold uppercase tracking-[.22em]">İlk adım · bir düşünme alanı</p>
+              <h2 className="section-title serif mt-2 text-[27px] sm:text-[31px]">Rüyanızı kendi kelimelerinizle anlatın</h2>
             </div>
-            <div className="inline-flex w-fit rounded-full border border-[#d7d0bf] bg-[#ebe7dc] p-1" role="tablist" aria-label="Yansıtma biçimi">
-              <button type="button" role="tab" aria-selected={mode === 'reflection'} data-testid="tab-kisisel-yansima" onClick={() => setMode('reflection')} className={`rounded-full px-4 py-2 text-[11px] font-semibold transition-colors ${mode === 'reflection' ? 'bg-[#173d35] text-[#f5f0e4] shadow-sm' : 'text-[#66756e] hover:text-[#183b35]'}`}>
+            <div className="mode-tabs inline-flex w-fit rounded-full p-1" role="tablist" aria-label="Yansıtma biçimi">
+              <button type="button" role="tab" aria-selected={mode === 'reflection'} data-testid="tab-kisisel-yansima" onClick={() => setMode('reflection')} className={`mode-tab rounded-full px-4 py-2 text-[11px] font-semibold transition-colors ${mode === 'reflection' ? 'is-active' : ''}`}>
                 Kişisel yansıma
               </button>
-              <button type="button" role="tab" aria-selected={mode === 'creator'} data-testid="tab-tiktok-yorum-modu" onClick={() => setMode('creator')} className={`rounded-full px-4 py-2 text-[11px] font-semibold transition-colors ${mode === 'creator' ? 'bg-[#173d35] text-[#f5f0e4] shadow-sm' : 'text-[#66756e] hover:text-[#183b35]'}`}>
+              <button type="button" role="tab" aria-selected={mode === 'creator'} data-testid="tab-tiktok-yorum-modu" onClick={() => setMode('creator')} className={`mode-tab rounded-full px-4 py-2 text-[11px] font-semibold transition-colors ${mode === 'creator' ? 'is-active' : ''}`}>
                 TikTok Yorum Modu
               </button>
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
-            <form onSubmit={submitDream} className="rounded-[24px] border border-[#ded8c9] bg-[#faf8f1] p-5 shadow-[0_18px_50px_-38px_rgba(18,59,52,.42)] sm:p-7">
+          <div className="workspace-grid grid gap-5 lg:grid-cols-[1.08fr_.92fr]">
+            <form onSubmit={submitDream} className="glass-panel dream-form rounded-[24px] p-5 sm:p-7">
               {mode === 'creator' && (
-                <label className="mb-5 block">
-                  <span className="mb-2 block text-[11px] font-semibold text-[#324c44]">Takipçi kullanıcı adı</span>
-                  <div className="flex items-center rounded-xl border border-[#d8d2c3] bg-[#fffdf7] px-3 focus-within:border-[#a88c49] focus-within:ring-2 focus-within:ring-[#a88c49]/15">
-                    <span className="text-sm text-[#9a927f]">@</span>
-                    <input value={username} onChange={(event) => setUsername(event.target.value)} maxLength={40} placeholder="kullaniciadi" className="w-full border-0 bg-transparent px-2 py-3 text-sm text-[#203d35] outline-none placeholder:text-[#aaa493]" data-testid="input-kullanici-adi" />
+                <label className="field-group mb-5 block">
+                  <span className="field-label mb-2 block text-[11px] font-semibold">Takipçi kullanıcı adı</span>
+                  <div className="glass-input-wrap flex items-center rounded-xl px-3">
+                    <span className="text-sm text-[#d4b968]">@</span>
+                    <input value={username} onChange={(event) => setUsername(event.target.value)} maxLength={40} placeholder="kullaniciadi" className="glass-input w-full border-0 bg-transparent px-2 py-3 text-sm outline-none" data-testid="input-kullanici-adi" />
                   </div>
                 </label>
               )}
-              <label htmlFor="dream-text" className="mb-2 block text-[11px] font-semibold text-[#324c44]">{mode === 'creator' ? 'Takipçinin yorumu' : 'Rüyanız'}</label>
-              <textarea id="dream-text" value={dream} onChange={(event) => setDream(event.target.value)} minLength={10} maxLength={mode === 'creator' ? 420 : 12000} required rows={5} placeholder="Hatırladığınız sahneleri, kişileri ve rüyanızda hissettiklerinizi yazın…" className="w-full resize-y rounded-xl border border-[#d8d2c3] bg-[#fffdf7] p-4 text-[13px] leading-6 text-[#203d35] outline-none transition focus:border-[#a88c49] focus:ring-2 focus:ring-[#a88c49]/15 placeholder:text-[#aaa493]" data-testid="textarea-ruya" />
-              <div className="mt-2 flex items-center justify-between text-[10px] text-[#89938a]">
+              <label htmlFor="dream-text" className="field-label mb-2 block text-[11px] font-semibold">{mode === 'creator' ? 'Takipçinin yorumu' : 'Rüyanız'}</label>
+              <textarea id="dream-text" value={dream} onChange={(event) => setDream(event.target.value)} minLength={10} maxLength={mode === 'creator' ? 420 : 12000} required rows={5} placeholder="Hatırladığınız sahneleri, kişileri ve rüyanızda hissettiklerinizi yazın…" className="glass-input dream-textarea w-full resize-y rounded-xl p-4 text-[13px] leading-6 outline-none transition" data-testid="textarea-ruya" />
+              <div className="form-footnote mt-2 flex items-center justify-between gap-3 text-[10px]">
                 <span>Rüya metniniz veritabanında saklanmaz; yalnızca yorum için işlenir.</span>
                 <span>{dream.length.toLocaleString('tr-TR')} / {mode === 'creator' ? '420' : '12.000'}</span>
               </div>
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <fieldset>
-                    <legend className="mb-2.5 flex items-center gap-2 text-[11px] font-semibold text-[#324c44]"><Clock3 size={14} className="text-[#987f3d]" /> Vakit</legend>
+                    <legend className="field-label mb-2.5 flex items-center gap-2 text-[11px] font-semibold"><Clock3 size={14} className="text-[#d4b968]" /> Vakit</legend>
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                     {([
                       { key: 'seher', label: 'Sabaha Karşı (Seher)', Icon: Sunrise },
                       { key: 'gece', label: 'Gece', Icon: MoonStar },
                       { key: 'gunduz', label: 'Gündüz', Icon: Sun },
                     ] as const).map(({ key, label, Icon }) => (
-                      <button key={key} type="button" onClick={() => setTimeOfDream(key)} aria-pressed={timeOfDream === key} data-testid={`button-vakit-${key}`} className={`flex items-center justify-center gap-2 rounded-xl border px-2 py-2.5 text-[10px] transition-colors ${timeOfDream === key ? 'border-[#7e927f] bg-[#e6ece2] text-[#194239]' : 'border-[#e3ded2] bg-[#fcfaf4] text-[#758078] hover:border-[#c3b98e]'}`}>
+                      <button key={key} type="button" onClick={() => setTimeOfDream(key)} aria-pressed={timeOfDream === key} data-testid={`button-vakit-${key}`} className={`context-chip flex items-center justify-center gap-2 rounded-xl px-2 py-2.5 text-[10px] transition-colors ${timeOfDream === key ? 'is-selected' : ''}`}>
                         <Icon size={15} strokeWidth={1.7} />{label}
                       </button>
                     ))}
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend className="mb-2.5 flex items-center gap-2 text-[11px] font-semibold text-[#324c44]"><Feather size={14} className="text-[#987f3d]" /> Tür</legend>
+                  <legend className="field-label mb-2.5 flex items-center gap-2 text-[11px] font-semibold"><Feather size={14} className="text-[#d4b968]" /> Tür</legend>
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                     {([
                       { key: 'huzurlu', label: 'Huzurlu & Net' },
                       { key: 'kabus', label: 'Korkutucu / Kabus' },
                       { key: 'tekrarlayan', label: 'Tekrarlayan' },
                     ] as const).map(({ key, label }) => (
-                      <button key={key} type="button" onClick={() => setDreamType(key)} aria-pressed={dreamType === key} data-testid={`button-tur-${key}`} className={`rounded-xl border px-2 py-2.5 text-[10px] transition-colors ${dreamType === key ? 'border-[#7e927f] bg-[#e6ece2] text-[#194239]' : 'border-[#e3ded2] bg-[#fcfaf4] text-[#758078] hover:border-[#c3b98e]'}`}>
+                      <button key={key} type="button" onClick={() => setDreamType(key)} aria-pressed={dreamType === key} data-testid={`button-tur-${key}`} className={`context-chip rounded-xl px-2 py-2.5 text-[10px] transition-colors ${dreamType === key ? 'is-selected' : ''}`}>
                         {label}
                       </button>
                     ))}
@@ -346,82 +373,91 @@ function Home() {
               </div>
 
               {requestError && !interpretation && (
-                <div role="alert" className="mt-5 flex items-start gap-2 rounded-xl border border-[#e3c7b9] bg-[#fbf0ea] px-4 py-3 text-xs leading-5 text-[#814f3e]" data-testid="status-hata">
+                <div role="alert" className="error-message mt-5 flex items-start gap-2 rounded-xl px-4 py-3 text-xs leading-5" data-testid="status-hata">
                   <CircleHelp size={15} className="mt-0.5 shrink-0" />{requestError}
                 </div>
               )}
               {interpretDream.isError && !requestError && (
-                <div role="alert" className="mt-5 rounded-xl border border-[#e3c7b9] bg-[#fbf0ea] px-4 py-3 text-xs leading-5 text-[#814f3e]">
+                <div role="alert" className="error-message mt-5 rounded-xl px-4 py-3 text-xs leading-5">
                   Bir sorun oluştu. Bilgileriniz formda duruyor; yeniden gönderebilirsiniz.
                 </div>
               )}
-              <button type="submit" disabled={busy || dream.trim().length < 10} data-testid="button-ruyami-tabir-et" className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#173d35] px-5 text-[12px] font-semibold tracking-[.01em] text-[#f6f1e3] transition-all hover:bg-[#215349] disabled:cursor-not-allowed disabled:opacity-55">
-                {busy ? <><span className="h-4 w-4 animate-pulse rounded-full border-2 border-[#e7d39a] border-r-transparent" /> Rüyanız üzerinde düşünülüyor…</> : <><Sparkles size={15} className="text-[#e2cc87]" /> Rüyamı Tabir Et &amp; Sahnele <ArrowRight size={15} /></>}
+              <button type="submit" disabled={busy || dream.trim().length < 10} data-testid="button-ruyami-tabir-et" className="gold-cta mt-6 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full px-5 text-[12px] font-semibold tracking-[.01em] transition-all disabled:cursor-not-allowed disabled:opacity-55">
+                {busy ? <><span className="h-4 w-4 animate-pulse rounded-full border-2 border-[#38533d] border-r-transparent" /><span>Rüyanız üzerinde düşünülüyor…</span></> : <><Sparkles size={15} /><span>Rüyamı Tabir Et &amp; Sahnele</span><ArrowRight size={15} /></>}
               </button>
-              <p className="mt-3 text-center text-[10px] leading-5 text-[#8b9288]">Bu içerik düşünmeye yardımcı olur; kesin bilgi veya dinî hüküm değildir.</p>
+              <p className="form-disclaimer mt-3 text-center text-[10px] leading-5">Bu içerik düşünmeye yardımcı olur; kesin bilgi veya dinî hüküm değildir.</p>
             </form>
 
-            <div className="min-h-[350px] rounded-[24px] border border-[#d9d2bf] bg-[#eae6da] p-5 sm:p-7">
+            <div className="glass-panel result-panel min-h-[350px] rounded-[24px] p-5 sm:p-7">
               {!interpretation && !busy && (
                 <div className="flex h-full min-h-[300px] flex-col justify-between">
                   <div>
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#dce4d8] text-[#335d4e]"><Feather size={17} /></span>
-                    <h3 className="serif mt-5 text-[23px] leading-snug text-[#1c4138]">Bir sembol, bir his,<br />bir düşünme fırsatı.</h3>
-                    <p className="mt-3 max-w-sm text-[12px] leading-6 text-[#68776d]">Rüyanızın çağrıştırdıklarına birlikte bakalım. Her yorum bir ihtimaldir; kendi hayatınızın bilgisi sizde.</p>
+                    <span className="empty-state-icon inline-flex h-9 w-9 items-center justify-center rounded-full"><Feather size={17} /></span>
+                    <h3 className="empty-state-title serif mt-5 text-[23px] leading-snug">Bir sembol, bir his,<br />bir düşünme fırsatı.</h3>
+                    <p className="empty-state-copy mt-3 max-w-sm text-[12px] leading-6">Rüyanızın çağrıştırdıklarına birlikte bakalım. Her yorum bir ihtimaldir; kendi hayatınızın bilgisi sizde.</p>
                   </div>
-                  <div className="mt-8 flex items-center gap-3 border-t border-[#d2cbbb] pt-4 text-[10px] leading-5 text-[#768278]">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#c8bb92] text-[#907b43]"><CircleHelp size={15} /></span>
+                  <div className="ethics-note mt-8 flex items-center gap-3 border-t pt-4 text-[10px] leading-5">
+                    <span className="ethics-icon grid h-8 w-8 shrink-0 place-items-center rounded-full"><CircleHelp size={15} /></span>
                     <span>Geleneksel kaynaklardan esinlenen, kesinlik iddiası taşımayan bir yansıma.</span>
                   </div>
                 </div>
               )}
               {busy && (
                 <div className="flex h-full min-h-[300px] flex-col justify-center gap-5" role="status" aria-live="polite" data-testid="status-yorum-yukleniyor">
-                  <DreamAnimationCanvas theme={LOADING_SCENE_THEME} className="h-[188px] shrink-0 rounded-2xl" />
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-[#d8d8c9]" />
-                  <div className="h-3 w-full animate-pulse rounded bg-[#d8d8c9]" />
-                  <div className="h-3 w-4/5 animate-pulse rounded bg-[#d8d8c9]" />
-                  <p className="text-center text-xs text-[#708076]">Rüyanız özenle ele alınıyor; sahneniz hazırlanıyor…</p>
+                  <DreamAnimationCanvas theme={LOADING_SCENE_THEME} className="cinematic-scene h-[188px] shrink-0 rounded-2xl" />
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-white/10" />
+                  <div className="h-3 w-full animate-pulse rounded bg-white/10" />
+                  <div className="h-3 w-4/5 animate-pulse rounded bg-white/10" />
+                  <p className="status-copy text-center text-xs">Rüyanız özenle ele alınıyor; sahneniz hazırlanıyor…</p>
                 </div>
               )}
               {interpretation && mode === 'reflection' && (
                 <div className="fade-up space-y-4" data-testid="panel-ruya-yorumu">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#927c42]">Yansımanız</p>
-                    <span className="rounded-full border border-[#c9c2af] px-2.5 py-1 text-[9px] text-[#738077]">Size özel</span>
+                    <p className="section-eyebrow text-[10px] font-bold uppercase tracking-[.18em]">Yansımanız</p>
+                    <span className="result-badge rounded-full px-2.5 py-1 text-[9px]">Size özel</span>
                   </div>
-                  <DreamAnimationCanvas theme={interpretation.sceneTheme} className="h-[210px] shrink-0 rounded-2xl" />
+                  <DreamAnimationCanvas theme={interpretation.sceneTheme} className="cinematic-scene h-[210px] shrink-0 rounded-2xl" />
                   {dreamType === 'kabus' && (
-                    <div className="rounded-2xl border border-[#d7c596] bg-[#f3ecd9] p-4" data-testid="card-kabus-adabi">
-                      <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[.17em] text-[#927c42]">Önce: Peygamberimizin tavsiyesi</p>
-                      <p className="text-[11px] leading-5 text-[#4b584c]">{nightmareAdvice}</p>
+                    <div className="kabus-note rounded-2xl p-4" data-testid="card-kabus-adabi">
+                      <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[.17em]">Önce: Peygamberimizin tavsiyesi</p>
+                      <p className="text-[11px] leading-5">{nightmareAdvice}</p>
                     </div>
                   )}
-                  <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                    <h3 className="serif text-[19px] text-[#1c4138]">Rüyanın Hikmeti &amp; Temel Semboller</h3>
-                    <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.wisdom}</p>
+                  <article className="glass-card result-card rounded-2xl p-4">
+                    <div className="result-card-heading flex items-start gap-3">
+                      <span className="card-icon"><Compass size={15} strokeWidth={1.6} /></span>
+                      <h3 className="result-card-title serif text-[19px]">Rüyanın Hikmeti &amp; Temel Semboller</h3>
+                    </div>
+                    <p className="result-card-copy mt-2 text-[12px] leading-[1.8]">{interpretation.wisdom}</p>
                     {!!interpretation.symbols.length && (
-                      <div className="mt-4 space-y-3 border-t border-[#ded8c8] pt-3">
+                      <div className="symbol-list mt-4 space-y-3 border-t pt-3">
                         {interpretation.symbols.map((item, index) => (
-                          <div key={`${item.symbol}-${index}`} className="border-l border-[#bda45d] pl-3">
-                            <p className="text-[11px] font-semibold text-[#324c44]">{item.symbol}</p>
-                            <p className="mt-0.5 text-[11px] leading-5 text-[#6b786f]">{item.meaning}</p>
+                          <div key={`${item.symbol}-${index}`} className="symbol-item border-l pl-3">
+                            <p className="text-[11px] font-semibold">{item.symbol}</p>
+                            <p className="result-card-copy mt-0.5 text-[11px] leading-5">{item.meaning}</p>
                           </div>
                         ))}
                       </div>
                     )}
                   </article>
-                  <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                    <h3 className="serif text-[18px] text-[#1c4138]">İbn-i Şirin ve İmam Nablusi Külliyatına Göre Tabiri</h3>
-                    <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.detailedInterpretation}</p>
+                  <article className="glass-card result-card rounded-2xl p-4">
+                    <div className="result-card-heading flex items-start gap-3">
+                      <span className="card-icon"><BookOpenText size={15} strokeWidth={1.6} /></span>
+                      <h3 className="result-card-title serif text-[18px]">İbn-i Şirin ve İmam Nablusi Külliyatına Göre Tabiri</h3>
+                    </div>
+                    <p className="result-card-copy mt-2 text-[12px] leading-[1.8]">{interpretation.detailedInterpretation}</p>
                   </article>
-                  <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                    <h3 className="serif text-[18px] text-[#1c4138]">Manevi Tavsiye, Dua ve Esmaül Hüsna Önerisi</h3>
-                    <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.dua}</p>
-                    <p className="mt-3 border-t border-[#ded8c8] pt-3 text-[11px] leading-5 text-[#68766c]">{interpretation.asmaSuggestion}</p>
-                    <p className="mt-3 border-t border-[#ded8c8] pt-3 text-[11px] leading-5 text-[#68766c]">{interpretation.dhikr}</p>
+                  <article className="glass-card result-card rounded-2xl p-4">
+                    <div className="result-card-heading flex items-start gap-3">
+                      <span className="card-icon"><HeartHandshake size={15} strokeWidth={1.6} /></span>
+                      <h3 className="result-card-title serif text-[18px]">Manevi Tavsiye, Dua ve Esmaül Hüsna Önerisi</h3>
+                    </div>
+                    <p className="result-card-copy mt-2 text-[12px] leading-[1.8]">{interpretation.dua}</p>
+                    <p className="result-card-copy card-note mt-3 border-t pt-3 text-[11px] leading-5">{interpretation.asmaSuggestion}</p>
+                    <p className="result-card-copy card-note mt-3 border-t pt-3 text-[11px] leading-5">{interpretation.dhikr}</p>
                   </article>
-                  <p className="flex gap-2 px-1 text-[10px] leading-5 text-[#7d877d]"><CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}</p>
+                  <p className="disclaimer-copy flex gap-2 px-1 text-[10px] leading-5"><CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}</p>
                 </div>
               )}
               {interpretation && mode === 'creator' && (
@@ -430,11 +466,11 @@ function Home() {
                 </div>
               )}
               {interpretation && (
-                <div className="mt-5 border-t border-[#d9d2bf] pt-5">
-                  <button type="button" onClick={createAndShareCard} data-testid="button-manevi-kart-paylas" className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#173d35] px-5 text-[12px] font-semibold text-[#f6f1e3] transition-colors hover:bg-[#215349]">
-                    <MoonStar size={15} className="text-[#e2cc87]" /> Manevi Kart Oluştur &amp; Paylaş
+                <div className="share-actions mt-5 border-t pt-5">
+                  <button type="button" onClick={createAndShareCard} data-testid="button-manevi-kart-paylas" className="share-cta flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full px-5 text-[12px] font-semibold transition-colors">
+                    <MoonStar size={15} /> Manevi Kart Oluştur &amp; Paylaş
                   </button>
-                  {shareFeedback && <p className="mt-2 text-center text-[10px] text-[#617267]" role="status" data-testid="status-paylasim">{shareFeedback}</p>}
+                  {shareFeedback && <p className="status-copy mt-2 text-center text-[10px]" role="status" data-testid="status-paylasim">{shareFeedback}</p>}
                 </div>
               )}
             </div>
@@ -443,25 +479,25 @@ function Home() {
       </section>
 
       {shareCardUrl && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[#081a1a]/80 p-4" data-testid="modal-manevi-kart">
-          <section role="dialog" aria-modal="true" aria-labelledby="share-card-title" className="max-h-[94dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-[#c8b477]/60 bg-[#f7f4e9] p-5 text-[#183b35] shadow-2xl">
+        <div className="share-modal-backdrop fixed inset-0 z-50 grid place-items-center p-4" data-testid="modal-manevi-kart">
+          <section role="dialog" aria-modal="true" aria-labelledby="share-card-title" className="share-modal max-h-[94dvh] w-full max-w-md overflow-y-auto rounded-3xl p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 id="share-card-title" className="serif text-xl">Manevi kartınız hazır</h2>
-              <button type="button" onClick={() => setShareCardUrl('')} className="rounded-full border border-[#c8b477] px-3 py-1.5 text-xs font-semibold" data-testid="button-kart-kapat">Kapat</button>
+              <h2 id="share-card-title" className="modal-title serif text-xl">Manevi kartınız hazır</h2>
+              <button type="button" onClick={() => setShareCardUrl('')} className="modal-close rounded-full px-3 py-1.5 text-xs font-semibold" data-testid="button-kart-kapat">Kapat</button>
             </div>
-            <img src={shareCardUrl} alt="Paylaşmaya hazır manevi rüya kartı" className="mx-auto max-h-[62dvh] rounded-xl border border-[#c8b477]/40" data-testid="img-manevi-kart" />
-            <p className="my-3 text-center text-[11px] text-[#68766c]">Görseli telefonunuza kaydetmek için basılı tutabilirsiniz.</p>
+            <img src={shareCardUrl} alt="Paylaşmaya hazır manevi rüya kartı" className="share-card-image mx-auto max-h-[62dvh] rounded-xl" data-testid="img-manevi-kart" />
+            <p className="modal-caption my-3 text-center text-[11px]">Görseli telefonunuza kaydetmek için basılı tutabilirsiniz.</p>
             <div className="grid grid-cols-2 gap-2">
-              <a href={shareCardUrl} download="manevi-ruya-karti.png" className="rounded-full bg-[#173d35] px-3 py-3 text-center text-[11px] font-semibold text-[#f6f1e3]" data-testid="link-gorseli-indir">Görseli İndir</a>
-              <button type="button" onClick={copyShareText} className="rounded-full border border-[#b5a267] bg-[#ede5cd] px-3 py-3 text-[11px] font-semibold text-[#425747]" data-testid="button-metni-kopyala">Metni Kopyala</button>
+              <a href={shareCardUrl} download="manevi-ruya-karti.png" className="modal-action rounded-full px-3 py-3 text-center text-[11px] font-semibold" data-testid="link-gorseli-indir">Görseli İndir</a>
+              <button type="button" onClick={copyShareText} className="modal-action modal-action--secondary rounded-full px-3 py-3 text-[11px] font-semibold" data-testid="button-metni-kopyala">Metni Kopyala</button>
             </div>
-            {shareFeedback && <p role="status" className="mt-3 text-center text-[11px] text-[#617267]" data-testid="status-kart-kopyalama">{shareFeedback}</p>}
+            {shareFeedback && <p role="status" className="status-copy mt-3 text-center text-[11px]" data-testid="status-kart-kopyalama">{shareFeedback}</p>}
           </section>
         </div>
       )}
 
-      <footer className="border-t border-[#ddd7c9] bg-[#eeeadf] px-5 py-6 text-center">
-        <p className="text-[10px] leading-5 text-[#748078]">Rüya yorumları kesin bilgi, gayb haberi veya fetva değildir. Dinî sorularınız için yetkin bir uzmana danışın.</p>
+      <footer className="site-footer border-t px-5 py-7 text-center">
+        <p className="footer-text text-[10px] leading-5">Rüya yorumları kesin bilgi, gayb haberi veya fetva değildir. Dinî sorularınız için yetkin bir uzmana danışın.</p>
       </footer>
     </main>
   );
@@ -524,18 +560,18 @@ function CreatorPortrait({ dream, username, interpretation, theme, nightmare }: 
   nightmare: string | null;
 }) {
   return (
-    <article className="portrait-frame relative flex w-full max-w-[310px] flex-col overflow-hidden rounded-[25px] border border-[#c8b477]/45 bg-[#102f2d] text-[#f4efdf] shadow-[0_16px_48px_-18px_rgba(16,43,39,.55)]" data-testid="card-dikey-paylasim">
-      <div className="geometry absolute inset-0 opacity-25" />
-      <div className="relative h-[37%] min-h-0 shrink-0 overflow-hidden">
-        <DreamAnimationCanvas theme={theme} className="h-full rounded-none" showCaption={false} />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#102f2d] to-transparent" />
-        <div className="absolute bottom-3 left-5 right-5 flex items-center justify-between">
+    <article className="creator-card portrait-frame relative flex w-full max-w-[310px] flex-col overflow-hidden rounded-[25px]" data-testid="card-dikey-paylasim">
+      <div className="creator-pattern absolute inset-0" />
+      <div className="creator-scene-wrap relative h-[37%] min-h-0 shrink-0 overflow-hidden">
+        <DreamAnimationCanvas theme={theme} className="cinematic-scene h-full rounded-none" showCaption={false} />
+        <div className="creator-scene-fade absolute inset-x-0 bottom-0 h-20" />
+        <div className="creator-scene-caption absolute bottom-3 left-5 right-5 flex items-center justify-between">
           <span className="text-[8px] font-semibold uppercase tracking-[.2em] text-[#dfcf9a]">Rüya üzerine bir yansıma</span>
           <MoonStar size={14} className="text-[#dfcf9a]" strokeWidth={1.4} />
         </div>
       </div>
-      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-4 pt-1">
-      <p className="text-[9px] leading-[1.45] text-[#f4efdf]">
+      <div className="creator-copy relative flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-4 pt-1">
+        <p className="creator-quote text-[9px] leading-[1.45]">
           <span className="text-[#d7c47e]">“</span>{dream}<span className="text-[#d7c47e]">”</span>
         </p>
         <p className="mt-2 text-[9px] font-semibold text-[#d8c57f]">{username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Bir takipçinin rüyası'}</p>

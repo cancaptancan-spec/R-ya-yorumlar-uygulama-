@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+.ruya-current-preview {
+  min-height: 100vh;
+  color: #183b35;
+  background: #f3f0e7;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.ruya-current-preview .serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.ruya-current-preview .geometry {
+  background-image:
+    linear-gradient(30deg, transparent 48%, rgba(205, 176, 104, .15) 49%, rgba(205, 176, 104, .15) 50%, transparent 51%),
+    linear-gradient(150deg, transparent 48%, rgba(205, 176, 104, .11) 49%, rgba(205, 176, 104, .11) 50%, transparent 51%);
+  background-size: 36px 62px;
+}
