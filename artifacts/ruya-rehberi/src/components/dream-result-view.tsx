@@ -15,7 +15,7 @@ const creatorHandle = '@huzuryolculugu';
 const creatorProfileUrl = 'https://www.tiktok.com/@huzuryolculugu';
 const canvasWidth = 720;
 const canvasHeight = 1280;
-const storyDuration = 16000;
+const storyDuration = 24000;
 const neyAudioUrl = 'https://cdn.freesound.org/previews/195/195078_2065570-hq.mp3';
 const neyRecordingPage = 'https://freesound.org/people/gopalkoduri/sounds/195078/';
 const creativeCommonsLicense = 'https://creativecommons.org/licenses/by-nc/3.0/';
@@ -82,28 +82,37 @@ function drawFittedText(
   minimumFontSize: number,
 ) {
   let fontSize = baseFontSize;
-  let lineHeight = fontSize * 1.18;
+  let lineHeight = fontSize * 1.22;
   let lines: string[] = [];
   let fitted = false;
 
   for (; fontSize >= minimumFontSize; fontSize -= 1) {
     context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
     lines = wrapCanvasText(context, text, maxWidth);
-    lineHeight = fontSize * 1.18;
+    lineHeight = fontSize * 1.22;
     if (lines.length * lineHeight <= maxHeight) {
       fitted = true;
       break;
     }
   }
 
-  if (!fitted) fontSize = minimumFontSize;
+  if (!fitted) {
+    for (fontSize = minimumFontSize - 1; fontSize >= 8; fontSize -= 1) {
+      context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+      lines = wrapCanvasText(context, text, maxWidth);
+      lineHeight = fontSize * 1.22;
+      if (lines.length * lineHeight <= maxHeight) {
+        fitted = true;
+        break;
+      }
+    }
+  }
+  if (!fitted) fontSize = 8;
   context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   lines = wrapCanvasText(context, text, maxWidth);
-  lineHeight = fontSize * 1.18;
-  if (lines.length * lineHeight > maxHeight && lines.length > 0) {
-    lineHeight = maxHeight / lines.length;
-  }
-  lines.forEach((lineText, index) => context.fillText(lineText, x, top + fontSize + index * lineHeight));
+  lineHeight = Math.min(fontSize * 1.22, maxHeight / Math.max(1, lines.length));
+  const firstBaseline = top + fontSize;
+  lines.forEach((lineText, index) => context.fillText(lineText, x, firstBaseline + index * lineHeight));
 }
 
 function paintScene(
@@ -179,33 +188,33 @@ function paintScene(
   context.textAlign = 'left';
   context.fillStyle = '#e3cc8d';
   context.font = '700 19px "Plus Jakarta Sans", sans-serif';
-  context.fillText(phaseLabels[phase], sideInset, 920);
+  context.fillText(phaseLabels[phase], sideInset, 850);
   context.fillStyle = '#f4efdf';
   context.font = '600 42px "Playfair Display", Georgia, serif';
   drawFittedText(
     context,
     copyText,
     sideInset,
-    966,
+    896,
     canvasWidth - sideInset * 2,
-    148,
+    198,
     '"Playfair Display", Georgia, serif',
     600,
     42,
-    18,
+    12,
   );
   context.fillStyle = 'rgba(239, 237, 221, .88)';
   drawFittedText(
     context,
     subText,
     sideInset,
-    1120,
+    1108,
     canvasWidth - sideInset * 2,
-    78,
+    84,
     '"Plus Jakarta Sans", sans-serif',
     400,
     23,
-    15,
+    12,
   );
   context.textAlign = 'center';
   context.fillStyle = 'rgba(239, 237, 221, .78)';
