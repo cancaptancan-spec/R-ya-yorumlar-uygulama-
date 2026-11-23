@@ -254,10 +254,33 @@ export function DreamResultView({
     wisdom: interpretation.wisdom,
   };
 
-  useEffect(() => () => {
-    const engine = neyAudioRef.current;
-    neyAudioRef.current = null;
-    if (engine) void engine.dispose();
+  useEffect(() => {
+    const disposeAudioEngine = () => {
+      const engine = neyAudioRef.current;
+      neyAudioRef.current = null;
+      if (engine) void engine.dispose();
+    };
+    const pauseWhenHidden = () => {
+      if (!document.hidden) return;
+      setIsAudioEnabled(false);
+      const engine = neyAudioRef.current;
+      if (engine) void engine.pause().catch(() => undefined);
+    };
+    const stopWhenLeavingPage = () => {
+      setIsAudioEnabled(false);
+      disposeAudioEngine();
+    };
+
+    document.addEventListener('visibilitychange', pauseWhenHidden);
+    window.addEventListener('pagehide', stopWhenLeavingPage);
+    window.addEventListener('beforeunload', stopWhenLeavingPage);
+
+    return () => {
+      document.removeEventListener('visibilitychange', pauseWhenHidden);
+      window.removeEventListener('pagehide', stopWhenLeavingPage);
+      window.removeEventListener('beforeunload', stopWhenLeavingPage);
+      disposeAudioEngine();
+    };
   }, []);
 
   const getNeyAudioEngine = () => {

@@ -1,6 +1,7 @@
 export type NeyAudioEngine = {
   mediaStream: MediaStream;
   setEnabled: (enabled: boolean) => Promise<void>;
+  pause: () => Promise<void>;
   dispose: () => Promise<void>;
 };
 
@@ -68,7 +69,24 @@ export function createNeyAudioEngine(): NeyAudioEngine {
   let startPromise: Promise<void> | null = null;
   let nextNoteTime = 0;
   let noteIndex = 0;
-  const persistentOscillators: OscillatorNode[] = [];
+  let lifecycleVersion = 0;
+  const activeOscillators = new Set<OscillatorNode>();
+  const activeCleanups = new Set<() => void>();
+
+  const stopActiveOscillators = () => {
+    for (const oscillator of activeOscillators) {
+      oscillator.onended = null;
+      try {
+        oscillator.stop();
+      } catch {
+        // The oscillator may already have stopped.
+      }
+      oscillator.disconnect();
+    }
+    for (const cleanup of activeCleanups) cleanup();
+    activeOscillators.clear();
+    activeCleanups.clear();
+  };
 
   const startDrone = (frequency: number, type: OscillatorType, volume: number) => {
     const oscillator = context.createOscillator();
@@ -87,7 +105,16 @@ export function createNeyAudioEngine(): NeyAudioEngine {
     gain.connect(dryBus);
     gain.connect(delaySend);
     oscillator.start();
-    persistentOscillators.push(oscillator);
+    activeOscillators.add(oscillator);
+    const cleanup = () => {
+      if (!activeCleanups.delete(cleanup)) return;
+      activeOscillators.delete(oscillator);
+      oscillator.disconnect();
+      lowpass.disconnect();
+      gain.disconnect();
+    };
+    activeCleanups.add(cleanup);
+    oscillator.onended = cleanup;
   };
 
   const playTone = (
@@ -137,15 +164,22 @@ export function createNeyAudioEngine(): NeyAudioEngine {
 
     fundamental.start(startTime);
     harmonic.start(startTime);
-    fundamental.stop(startTime + duration + 0.04);
-    harmonic.stop(startTime + duration + 0.04);
-    fundamental.onended = () => {
+    activeOscillators.add(fundamental);
+    activeOscillators.add(harmonic);
+    const cleanup = () => {
+      if (!activeCleanups.delete(cleanup)) return;
+      activeOscillators.delete(fundamental);
+      activeOscillators.delete(harmonic);
       fundamental.disconnect();
       harmonic.disconnect();
       harmonicGain.disconnect();
       lowpass.disconnect();
       envelope.disconnect();
     };
+    activeCleanups.add(cleanup);
+    fundamental.stop(startTime + duration + 0.04);
+    harmonic.stop(startTime + duration + 0.04);
+    fundamental.onended = cleanup;
   };
 
   const playOudNote = (frequency: number, startTime: number) => {
@@ -174,8 +208,10 @@ export function createNeyAudioEngine(): NeyAudioEngine {
     if (isRunning) return;
     if (startPromise) return startPromise;
 
-    startPromise = (async () => {
+    const startVersion = lifecycleVersion;
+    const operation = (async () => {
       if (context.state !== 'running') await context.resume();
+      if (disposed || startVersion !== lifecycleVersion) return;
 
       // A soft D2/A2 drone grounds the melody; all voices use pitched oscillators.
       startDrone(73.42, 'sine', 0.026);
@@ -187,15 +223,32 @@ export function createNeyAudioEngine(): NeyAudioEngine {
       scheduleTimer = window.setInterval(scheduleNotes, 100);
       isRunning = true;
     })();
+    startPromise = operation;
 
     try {
-      await startPromise;
+      await operation;
     } catch (error) {
       isRunning = false;
       throw error;
     } finally {
-      startPromise = null;
+      if (startPromise === operation) startPromise = null;
     }
+  };
+
+  const pause = async () => {
+    if (disposed) return;
+    lifecycleVersion += 1;
+    startPromise = null;
+    window.clearInterval(scheduleTimer);
+    scheduleTimer = 0;
+    isRunning = false;
+    const now = context.currentTime;
+    masterGain.gain.cancelScheduledValues(now);
+    masterGain.gain.setValueAtTime(0, now);
+    stopActiveOscillators();
+    nextNoteTime = 0;
+    noteIndex = 0;
+    if (context.state === 'running') await context.suspend();
   };
 
   return {
@@ -207,17 +260,18 @@ export function createNeyAudioEngine(): NeyAudioEngine {
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setTargetAtTime(enabled ? 0.9 : 0, now, 0.18);
     },
+    pause,
     async dispose() {
       if (disposed) return;
       disposed = true;
+      lifecycleVersion += 1;
+      startPromise = null;
       window.clearInterval(scheduleTimer);
-      persistentOscillators.forEach((oscillator) => {
-        try {
-          oscillator.stop();
-        } catch {
-          // The oscillator may already have stopped while the context is closing.
-        }
-      });
+      scheduleTimer = 0;
+      stopActiveOscillators();
+      const now = context.currentTime;
+      masterGain.gain.cancelScheduledValues(now);
+      masterGain.gain.setValueAtTime(0, now);
       mediaDestination.stream.getTracks().forEach((track) => track.stop());
       if (context.state !== 'closed') await context.close();
     },
