@@ -10,6 +10,7 @@ import {
   type DreamSceneTheme,
 } from '@/components/dream-animation-canvas';
 import { DreamResultView } from '@/components/dream-result-view';
+import PrivacyPolicy from '@/pages/privacy-policy';
 import {
   ArrowDown,
   ArrowRight,
@@ -24,6 +25,7 @@ import {
 import {
   Route,
   Switch,
+  Link,
   useLocation,
   Router as WouterRouter,
 } from 'wouter';
@@ -478,6 +480,7 @@ function Home() {
 
       <footer className="site-footer border-t px-5 py-7 text-center">
         <p className="footer-text text-[10px] leading-5">Rüya yorumları kesin bilgi, gayb haberi veya fetva değildir. Dinî sorularınız için yetkin bir uzmana danışın.</p>
+        <Link href="/privacy" className="privacy-footer-link mt-2 inline-block text-[10px]">Gizlilik Politikası</Link>
       </footer>
     </main>
   );
@@ -539,6 +542,7 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/privacy" component={PrivacyPolicy} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
