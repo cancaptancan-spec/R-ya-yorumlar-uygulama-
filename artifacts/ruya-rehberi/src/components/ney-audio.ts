@@ -4,24 +4,9 @@ export type NeyAudioEngine = {
   dispose: () => Promise<void>;
 };
 
-const hijazPhrase = [146.83, 155.56, 185, 220, 196, 233.08, 185, 146.83];
-const rastPhrase = [130.81, 146.83, 164.81, 174.61, 196, 220, 196, 130.81];
-
-function createReverbImpulse(context: AudioContext) {
-  const duration = 2.6;
-  const length = Math.floor(context.sampleRate * duration);
-  const impulse = context.createBuffer(2, length, context.sampleRate);
-
-  for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
-    const samples = impulse.getChannelData(channel);
-    for (let index = 0; index < length; index += 1) {
-      const fade = Math.pow(1 - index / length, 3.1);
-      samples[index] = (Math.random() * 2 - 1) * fade;
-    }
-  }
-
-  return impulse;
-}
+// D, Eb, F#, G, A, Bb, C, D: a simple Turkish Hicaz phrase.
+const hicazPhrase = [293.66, 311.13, 369.99, 392, 440, 466.16, 523.25, 587.33];
+const noteInterval = 1.04;
 
 export function createNeyAudioEngine(): NeyAudioEngine {
   const windowWithWebkit = window as Window & { webkitAudioContext?: typeof AudioContext };
@@ -35,100 +20,144 @@ export function createNeyAudioEngine(): NeyAudioEngine {
   masterGain.gain.setValueAtTime(0, context.currentTime);
 
   const dryBus = context.createGain();
-  const reverbSend = context.createGain();
-  reverbSend.gain.value = 0.22;
-  const convolver = context.createConvolver();
-  convolver.buffer = createReverbImpulse(context);
-  const reverbReturn = context.createGain();
-  reverbReturn.gain.value = 0.18;
-
-  const delay = context.createDelay(1.2);
-  delay.delayTime.value = 0.34;
-  const delayDamp = context.createBiquadFilter();
-  delayDamp.type = 'lowpass';
-  delayDamp.frequency.value = 1450;
-  const delayFeedback = context.createGain();
-  delayFeedback.gain.value = 0.16;
-  const delayReturn = context.createGain();
-  delayReturn.gain.value = 0.12;
   const delaySend = context.createGain();
-  delaySend.gain.value = 0.14;
-
+  delaySend.gain.value = 0.2;
   const mediaDestination = context.createMediaStreamDestination();
+
   dryBus.connect(masterGain);
-  reverbSend.connect(convolver);
-  convolver.connect(reverbReturn);
-  reverbReturn.connect(masterGain);
-  delay.connect(delayDamp);
-  delayDamp.connect(delayFeedback);
-  delayFeedback.connect(delay);
-  delayDamp.connect(delayReturn);
-  delayReturn.connect(masterGain);
-  delaySend.connect(delay);
   masterGain.connect(context.destination);
   masterGain.connect(mediaDestination);
 
+  // Filtered, panned delay taps create a clean stereo ambience without noise samples.
+  const addDelayTap = (seconds: number, pan: number, level: number) => {
+    const delay = context.createDelay(1.2);
+    delay.delayTime.value = seconds;
+    const lowpass = context.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 800;
+    const feedback = context.createGain();
+    feedback.gain.value = 0.12;
+    const returnGain = context.createGain();
+    returnGain.gain.value = level;
+    const panner = context.createStereoPanner();
+    panner.pan.value = pan;
+
+    delaySend.connect(delay);
+    delay.connect(lowpass);
+    lowpass.connect(feedback);
+    feedback.connect(delay);
+    lowpass.connect(returnGain);
+    returnGain.connect(panner);
+    panner.connect(masterGain);
+  };
+
+  addDelayTap(0.21, -0.72, 0.16);
+  addDelayTap(0.31, 0.72, 0.14);
+  addDelayTap(0.43, -0.18, 0.1);
+
   let scheduleTimer = 0;
-  let noiseSource: AudioBufferSourceNode | null = null;
   let isRunning = false;
   let disposed = false;
   let startPromise: Promise<void> | null = null;
   let nextNoteTime = 0;
   let noteIndex = 0;
+  const persistentOscillators: OscillatorNode[] = [];
 
-  const playNeyNote = (frequency: number, startTime: number) => {
-    const filter = context.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1250;
-    filter.Q.value = 0.55;
-
+  const startDrone = (frequency: number, type: OscillatorType, volume: number) => {
     const oscillator = context.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(frequency * 0.996, startTime);
-    oscillator.frequency.linearRampToValueAtTime(frequency, startTime + 0.18);
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+
+    const lowpass = context.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 800;
+    const gain = context.createGain();
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.linearRampToValueAtTime(volume, context.currentTime + 1.8);
+
+    oscillator.connect(lowpass);
+    lowpass.connect(gain);
+    gain.connect(dryBus);
+    gain.connect(delaySend);
+    oscillator.start();
+    persistentOscillators.push(oscillator);
+  };
+
+  const playTone = (
+    frequency: number,
+    startTime: number,
+    duration: number,
+    peak: number,
+    attack: number,
+    decay: number,
+    sustain: number,
+    release: number,
+    harmonicLevel: number,
+  ) => {
+    const lowpass = context.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 800;
+    lowpass.Q.value = 0.65;
+
+    const fundamental = context.createOscillator();
+    fundamental.type = 'sine';
+    fundamental.frequency.setValueAtTime(frequency * 0.998, startTime);
+    fundamental.frequency.linearRampToValueAtTime(frequency, startTime + attack);
 
     const harmonic = context.createOscillator();
     harmonic.type = 'triangle';
     harmonic.frequency.setValueAtTime(frequency * 2, startTime);
     const harmonicGain = context.createGain();
-    harmonicGain.gain.value = 0.018;
+    harmonicGain.gain.value = harmonicLevel;
 
     const envelope = context.createGain();
+    const sustainTime = startTime + duration - release;
     envelope.gain.setValueAtTime(0.0001, startTime);
-    envelope.gain.linearRampToValueAtTime(0.13, startTime + 0.2);
-    envelope.gain.setValueAtTime(0.095, startTime + 0.66);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.91);
+    envelope.gain.linearRampToValueAtTime(peak, startTime + attack);
+    envelope.gain.exponentialRampToValueAtTime(
+      Math.max(sustain, 0.0002),
+      startTime + attack + decay,
+    );
+    envelope.gain.setValueAtTime(Math.max(sustain, 0.0002), sustainTime);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
-    oscillator.connect(filter);
+    fundamental.connect(lowpass);
     harmonic.connect(harmonicGain);
-    harmonicGain.connect(filter);
-    filter.connect(envelope);
+    harmonicGain.connect(lowpass);
+    lowpass.connect(envelope);
     envelope.connect(dryBus);
-    envelope.connect(reverbSend);
     envelope.connect(delaySend);
 
-    oscillator.start(startTime);
+    fundamental.start(startTime);
     harmonic.start(startTime);
-    oscillator.stop(startTime + 0.94);
-    harmonic.stop(startTime + 0.94);
-    oscillator.onended = () => {
-      oscillator.disconnect();
+    fundamental.stop(startTime + duration + 0.04);
+    harmonic.stop(startTime + duration + 0.04);
+    fundamental.onended = () => {
+      fundamental.disconnect();
       harmonic.disconnect();
       harmonicGain.disconnect();
-      filter.disconnect();
+      lowpass.disconnect();
       envelope.disconnect();
     };
+  };
+
+  const playOudNote = (frequency: number, startTime: number) => {
+    playTone(frequency, startTime, 0.98, 0.078, 0.05, 0.31, 0.028, 0.4, 0.07);
+  };
+
+  const playNeyNote = (frequency: number, startTime: number) => {
+    playTone(frequency, startTime, 1.9, 0.038, 0.28, 0.32, 0.028, 0.55, 0.035);
   };
 
   const scheduleNotes = () => {
     const scheduleUntil = context.currentTime + 0.45;
     while (nextNoteTime < scheduleUntil) {
-      const phrase = Math.floor(noteIndex / hijazPhrase.length) % 2 === 0
-        ? hijazPhrase
-        : rastPhrase;
-      const frequency = phrase[noteIndex % phrase.length];
-      playNeyNote(frequency, nextNoteTime);
-      nextNoteTime += 1;
+      const frequency = hicazPhrase[noteIndex % hicazPhrase.length];
+      playOudNote(frequency, nextNoteTime);
+      if (noteIndex % 2 === 0) {
+        playNeyNote(frequency, nextNoteTime + 0.1);
+      }
+      nextNoteTime += noteInterval;
       noteIndex += 1;
     }
   };
@@ -141,32 +170,17 @@ export function createNeyAudioEngine(): NeyAudioEngine {
     startPromise = (async () => {
       if (context.state !== 'running') await context.resume();
 
-      const noiseBuffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
-      const noiseSamples = noiseBuffer.getChannelData(0);
-      for (let index = 0; index < noiseSamples.length; index += 1) {
-        noiseSamples[index] = (Math.random() * 2 - 1) * 0.45;
-      }
-
-      noiseSource = context.createBufferSource();
-      noiseSource.buffer = noiseBuffer;
-      noiseSource.loop = true;
-      const breathFilter = context.createBiquadFilter();
-      breathFilter.type = 'bandpass';
-      breathFilter.frequency.value = 850;
-      breathFilter.Q.value = 0.42;
-      const breathGain = context.createGain();
-      breathGain.gain.value = 0.013;
-      noiseSource.connect(breathFilter);
-      breathFilter.connect(breathGain);
-      breathGain.connect(dryBus);
-      noiseSource.start();
-
+      // A soft D2/A2 drone grounds the melody; all voices use pitched oscillators.
+      startDrone(73.42, 'sine', 0.026);
+      startDrone(110, 'sine', 0.016);
+      startDrone(73.42, 'triangle', 0.004);
       nextNoteTime = context.currentTime + 0.06;
       noteIndex = 0;
       scheduleNotes();
       scheduleTimer = window.setInterval(scheduleNotes, 100);
       isRunning = true;
     })();
+
     try {
       await startPromise;
     } catch (error) {
@@ -190,13 +204,13 @@ export function createNeyAudioEngine(): NeyAudioEngine {
       if (disposed) return;
       disposed = true;
       window.clearInterval(scheduleTimer);
-      if (noiseSource) {
+      persistentOscillators.forEach((oscillator) => {
         try {
-          noiseSource.stop();
+          oscillator.stop();
         } catch {
-          // The source may already have stopped while the context was closing.
+          // The oscillator may already have stopped while the context is closing.
         }
-      }
+      });
       mediaDestination.stream.getTracks().forEach((track) => track.stop());
       if (context.state !== 'closed') await context.close();
     },

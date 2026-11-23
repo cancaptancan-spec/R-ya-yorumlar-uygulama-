@@ -1,1 +1,1 @@
-- [Dream artwork pipeline](local-dream-scene-rendering.md) — generate real dream art through Replit OpenAI; combine its Canvas video with locally synthesized Ney audio.
+- [Dream artwork pipeline](local-dream-scene-rendering.md) — generate real dream art through Replit OpenAI; mix noise-free Hicaz Oud/Ney synthesis into Canvas video exports.
