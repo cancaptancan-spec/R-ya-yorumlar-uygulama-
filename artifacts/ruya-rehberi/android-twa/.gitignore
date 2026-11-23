@@ -3,6 +3,7 @@ build/
 app/build/
 local.properties
 decompressed/
+release-artifacts/
 *.keystore
 *.jks
 *.aab

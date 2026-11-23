@@ -14,8 +14,6 @@ jobs:
     defaults:
       run:
         working-directory: artifacts/ruya-rehberi/android-twa
-    env:
-      ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/ruya-upload-keystore.jks
 
     steps:
       - name: Check out repository
@@ -53,6 +51,8 @@ jobs:
             echo "::error::Configure the ANDROID_KEYSTORE_BASE64 GitHub Actions secret."
             exit 1
           fi
+          ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/ruya-upload-keystore.jks"
+          echo "ANDROID_KEYSTORE_PATH=$ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
           umask 077
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
           test -s "$ANDROID_KEYSTORE_PATH"
@@ -86,7 +86,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/android-release-artifacts"
+          output="$PWD/release-artifacts"
           mkdir -p "$output"
           cp app-release-bundle.aab "$output/app-release-bundle.aab"
 
@@ -106,7 +106,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: manevi-ruya-rehberi-release-${{ github.run_number }}
-          path: ${{ runner.temp }}/android-release-artifacts/
+          path: artifacts/ruya-rehberi/android-twa/release-artifacts/
           if-no-files-found: error
           retention-days: 14
 
