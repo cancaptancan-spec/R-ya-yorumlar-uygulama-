@@ -19,4 +19,14 @@ export interface DreamInterpretation {
   nightmareAdvice: string | null;
   sceneTheme: DreamSceneTheme;
   disclaimer: string;
+  /**
+     * Generated PNG artwork as a base64 data URL, or null when generation failed
+     * @nullable
+     */
+  sceneImageDataUrl: string | null;
+  /**
+     * Exact image provider error text, or null when generation succeeded
+     * @nullable
+     */
+  sceneImageError: string | null;
 }

@@ -169,7 +169,7 @@ export const getInterpretDreamUrl = () => {
 }
 
 /**
- * Returns a non-deterministic, respectful reflection informed by traditional Islamic dream literature. Dream text is not persisted.
+ * Returns a non-deterministic, respectful reflection informed by traditional Islamic dream literature and a generated portrait dream artwork. Dream text is not persisted.
  * @summary Interpret a dream with careful traditional context
  */
 export const interpretDream = async (dreamInput: DreamInput, options?: Parameters<typeof customFetch>[1]): Promise<DreamInterpretation> => {

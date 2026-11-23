@@ -7,10 +7,9 @@ import NotFound from '@/pages/not-found';
 import { useInterpretDream, type DreamInterpretation } from '@workspace/api-client-react';
 import {
   DreamAnimationCanvas,
-  drawDreamSceneFrame,
   type DreamSceneTheme,
 } from '@/components/dream-animation-canvas';
-import { DreamVideoScene } from '@/components/dream-video-scene';
+import { DreamResultView } from '@/components/dream-result-view';
 import {
   ArrowDown,
   ArrowRight,
@@ -85,7 +84,10 @@ function Home() {
       onSuccess: (result) => {
         setInterpretation(result);
       },
-      onError: () => setRequestError('Yorumunuz şu an hazırlanamadı. Lütfen bağlantınızı kontrol edip yeniden deneyin.'),
+      onError: (error) => {
+        const apiMessage = (error as { data?: { error?: string } }).data?.error;
+        setRequestError(apiMessage || error.message || 'Yorumunuz şu an hazırlanamadı. Lütfen bağlantınızı kontrol edip yeniden deneyin.');
+      },
     });
   };
 
@@ -107,7 +109,19 @@ function Home() {
       context.fillRect(0, 0, canvas.width, canvas.height);
 
       const sceneHeight = 570;
-      drawDreamSceneFrame(context, interpretation.sceneTheme, canvas.width, sceneHeight, 2.4);
+      let shareCardNotice = '';
+      if (interpretation.sceneImageDataUrl) {
+        const generatedImage = new Image();
+        generatedImage.src = interpretation.sceneImageDataUrl;
+        try {
+          await generatedImage.decode();
+          context.drawImage(generatedImage, 0, 0, canvas.width, sceneHeight);
+        } catch (error) {
+          shareCardNotice = error instanceof Error ? error.message : String(error);
+        }
+      } else if (interpretation.sceneImageError) {
+        shareCardNotice = interpretation.sceneImageError;
+      }
       const sceneFade = context.createLinearGradient(0, sceneHeight * 0.57, 0, sceneHeight + 100);
       sceneFade.addColorStop(0, 'rgba(18, 56, 47, 0)');
       sceneFade.addColorStop(1, '#12382f');
@@ -207,6 +221,7 @@ function Home() {
         'Hayra yorunuz ki hayır olsun',
       ].join('\n\n'));
       setShareCardUrl(imageUrl);
+      if (shareCardNotice) setShareFeedback(`Görsel karta eklenemedi: ${shareCardNotice} Metin kartı hazır.`);
     } catch {
       setShareFeedback('Kart oluşturulamadı. Lütfen yeniden deneyin.');
     }
@@ -421,16 +436,13 @@ function Home() {
               )}
               {interpretation && (
                 <div className="fade-up space-y-4" data-testid={mode === 'creator' ? 'panel-tiktok-yorumu' : 'panel-ruya-yorumu'}>
-                  <DreamVideoScene
+                  <DreamResultView
                     dream={dream}
                     username={mode === 'creator' ? username : ''}
                     interpretation={interpretation}
                     nightmareAdvice={dreamType === 'kabus' ? nightmareAdvice : null}
                     showCreatorActions={mode === 'creator'}
                   />
-                  <p className="disclaimer-copy flex gap-2 px-1 text-[10px] leading-5">
-                    <CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}
-                  </p>
                 </div>
               )}
               {interpretation && (

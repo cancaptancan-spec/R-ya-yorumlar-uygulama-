@@ -11,7 +11,7 @@ tags:
   - name: health
     description: Health operations
   - name: dreams
-    description: Private dream interpretation and locally rendered symbolic scenes
+    description: Private dream interpretation and generated symbolic dream artwork
 paths:
   /healthz:
     get:
@@ -33,7 +33,8 @@ paths:
       summary: Interpret a dream with careful traditional context
       description: >
         Returns a non-deterministic, respectful reflection informed by traditional
-        Islamic dream literature. Dream text is not persisted.
+        Islamic dream literature and a generated portrait dream artwork. Dream text
+        is not persisted.
       requestBody:
         required: true
         content:
@@ -42,7 +43,7 @@ paths:
               $ref: "#/components/schemas/DreamInput"
       responses:
         "200":
-          description: Interpretation and a structured symbolic scene theme
+          description: Interpretation and generated dream artwork; image errors are included in the response
           content:
             application/json:
               schema:
@@ -116,6 +117,12 @@ components:
           $ref: "#/components/schemas/DreamSceneTheme"
         disclaimer:
           type: string
+        sceneImageDataUrl:
+          type: ["string", "null"]
+          description: Generated PNG artwork as a base64 data URL, or null when generation failed
+        sceneImageError:
+          type: ["string", "null"]
+          description: Exact image provider error text, or null when generation succeeded
       required:
         - wisdom
         - symbols
@@ -126,6 +133,8 @@ components:
         - nightmareAdvice
         - sceneTheme
         - disclaimer
+        - sceneImageDataUrl
+        - sceneImageError
     DreamSceneTheme:
       type: object
       properties:

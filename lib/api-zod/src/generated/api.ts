@@ -18,7 +18,7 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * Returns a non-deterministic, respectful reflection informed by traditional Islamic dream literature. Dream text is not persisted.
+ * Returns a non-deterministic, respectful reflection informed by traditional Islamic dream literature and a generated portrait dream artwork. Dream text is not persisted.
  * @summary Interpret a dream with careful traditional context
  */
 export const interpretDreamBodyDreamMin = 10;
@@ -58,7 +58,9 @@ export const InterpretDreamResponse = zod.object({
   "accentColor": zod.string().regex(interpretDreamResponseSceneThemeAccentColorRegExp),
   "sceneCaption": zod.string().min(1).max(interpretDreamResponseSceneThemeSceneCaptionMax)
 }),
-  "disclaimer": zod.string()
+  "disclaimer": zod.string(),
+  "sceneImageDataUrl": zod.string().nullable().describe('Generated PNG artwork as a base64 data URL, or null when generation failed'),
+  "sceneImageError": zod.string().nullable().describe('Exact image provider error text, or null when generation succeeded')
 })
 
 
