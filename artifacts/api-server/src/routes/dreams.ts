@@ -96,8 +96,14 @@ router.post("/dreams/scene", async (req, res): Promise<void> => {
       imageDataUrl: `data:image/png;base64,${image.toString("base64")}`,
     }));
   } catch (error) {
+    const providerError = error as { status?: number; code?: string; name?: string; message?: string } | null;
     req.log.error(
-      { status: (error as { status?: number } | null)?.status },
+      {
+        status: providerError?.status,
+        code: providerError?.code,
+        name: providerError?.name,
+        message: providerError?.message?.replace(input.data.scenePrompt, "[scene prompt]").slice(0, 240),
+      },
       "Dream scene provider request failed",
     );
     res.status(502).json({ error: "Sahne şu anda oluşturulamadı. Lütfen yeniden deneyin." });
