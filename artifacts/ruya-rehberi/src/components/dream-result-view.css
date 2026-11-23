@@ -37,6 +37,7 @@
 }
 
 .dream-result-view__image {
+  height: auto;
   object-fit: cover;
   object-position: center;
 }
@@ -71,13 +72,22 @@
   letter-spacing: .045em;
 }
 
+.dream-result-view__downloads {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  margin-top: .8rem;
+}
+
 .dream-result-view__download {
   display: inline-flex;
   min-height: 42px;
   align-items: center;
   justify-content: center;
   gap: .55rem;
-  margin-top: .8rem;
   border: 1px solid rgba(217, 189, 120, .55);
   border-radius: 999px;
   padding: .65rem 1.05rem;
@@ -86,12 +96,49 @@
   font-size: .75rem;
   font-weight: 700;
   text-decoration: none;
+  text-align: center;
   transition: transform .18s ease, filter .18s ease;
 }
 
 .dream-result-view__download:hover {
   transform: translateY(-1px);
   filter: brightness(1.06);
+}
+
+.dream-result-view__download--video {
+  min-height: 46px;
+  flex: 1 1 230px;
+  border-color: rgba(255, 234, 179, .76);
+  color: #211c10;
+  background: linear-gradient(115deg, #b59654, #ead49a 52%, #c2a762);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .36), 0 9px 24px rgba(0, 0, 0, .18);
+  cursor: pointer;
+}
+
+.dream-result-view__download--image {
+  flex: 0 1 auto;
+  border-color: rgba(217, 189, 120, .4);
+  color: #e8d9ae;
+  background: rgba(12, 32, 27, .92);
+}
+
+.dream-result-view__download--image:hover {
+  background: #1a332c;
+}
+
+.dream-result-view__download--video:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+  filter: saturate(.65);
+}
+
+.dream-result-view__video-status {
+  width: 100%;
+  margin: .1rem 0 0;
+  color: var(--result-muted);
+  font-size: .68rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .dream-result-view__nightmare {

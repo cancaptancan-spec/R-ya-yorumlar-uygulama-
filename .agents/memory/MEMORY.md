@@ -1,1 +1,1 @@
-- [Local dream scene rendering](local-dream-scene-rendering.md) — this app must render symbolic scenes in Canvas rather than external image APIs.
+- [Dream artwork pipeline](local-dream-scene-rendering.md) — generate real dream-specific art through Replit OpenAI; use that image in the Canvas video and show provider errors.
