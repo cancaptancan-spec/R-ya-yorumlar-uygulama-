@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, BookOpenText, Check, Download, HeartHandshake, Share2, Sparkles, Video } from 'lucide-react';
+import { ArrowUpRight, BookOpenText, Check, Download, HeartHandshake, Share2, Sparkles, Video, Volume2, VolumeX } from 'lucide-react';
 import type { DreamInterpretation } from '@workspace/api-client-react';
+import { createNeyAudioEngine, type NeyAudioEngine } from '@/components/ney-audio';
 import './dream-result-view.css';
 
 type DreamResultViewProps = {
@@ -182,9 +183,12 @@ export function DreamResultView({
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const [videoStatus, setVideoStatus] = useState('');
+  const [audioStatus, setAudioStatus] = useState('');
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationOriginRef = useRef<number | null>(null);
+  const neyAudioRef = useRef<NeyAudioEngine | null>(null);
   const firstSymbol = interpretation.symbols[0];
   const reflections = [
     interpretation.dua,
@@ -193,6 +197,35 @@ export function DreamResultView({
     symbol: firstSymbol?.symbol ?? 'Rüyanızın ana sembolleri',
     meaning: firstSymbol?.meaning ?? interpretation.wisdom,
     wisdom: interpretation.wisdom,
+  };
+
+  useEffect(() => () => {
+    const engine = neyAudioRef.current;
+    neyAudioRef.current = null;
+    if (engine) void engine.dispose();
+  }, []);
+
+  const getNeyAudioEngine = () => {
+    if (!neyAudioRef.current) neyAudioRef.current = createNeyAudioEngine();
+    return neyAudioRef.current;
+  };
+
+  const setNeyAudioEnabled = async (enabled: boolean) => {
+    setAudioStatus('');
+    try {
+      if (!enabled && !neyAudioRef.current) {
+        setIsAudioEnabled(false);
+        return;
+      }
+      await getNeyAudioEngine().setEnabled(enabled);
+      setIsAudioEnabled(enabled);
+    } catch (error) {
+      setAudioStatus(error instanceof Error ? error.message : 'Ney sesi başlatılamadı.');
+    }
+  };
+
+  const handlePlayerInteraction = () => {
+    if (!isAudioEnabled) void setNeyAudioEnabled(true);
   };
 
   useEffect(() => {
@@ -293,10 +326,10 @@ export function DreamResultView({
     }
 
     const mimeTypes = [
-      'video/mp4;codecs=avc1.42E01E',
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
       'video/mp4',
-      'video/webm;codecs=vp9',
-      'video/webm;codecs=vp8',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
       'video/webm',
     ];
     const mimeType = mimeTypes.find((candidate) => MediaRecorder.isTypeSupported(candidate));
@@ -305,15 +338,23 @@ export function DreamResultView({
       return;
     }
 
-    let stream: MediaStream | null = null;
+    let canvasStream: MediaStream | null = null;
     let recorder: MediaRecorder | null = null;
     let stopTimer = 0;
     setIsRecording(true);
     setVideoStatus('Kısa video kaydediliyor…');
 
     try {
-      stream = canvas.captureStream(30);
-      recorder = new MediaRecorder(stream, { mimeType });
+      const audioEngine = getNeyAudioEngine();
+      await audioEngine.setEnabled(true);
+      setIsAudioEnabled(true);
+      setAudioStatus('');
+      canvasStream = canvas.captureStream(30);
+      const recordingStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...audioEngine.mediaStream.getAudioTracks(),
+      ]);
+      recorder = new MediaRecorder(recordingStream, { mimeType });
       const chunks: BlobPart[] = [];
       const recording = new Promise<Blob>((resolve, reject) => {
         if (!recorder) {
@@ -341,13 +382,15 @@ export function DreamResultView({
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-       setVideoStatus(extension === 'mp4' ? 'MP4 kısa video indirildi.' : 'WebM kısa video indirildi.');
-    } catch {
-      setVideoStatus('Video oluşturulamadı. Lütfen yeniden deneyin.');
+      setVideoStatus(extension === 'mp4' ? 'Sesli MP4 kısa video indirildi.' : 'Sesli WebM kısa video indirildi.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Bilinmeyen kayıt hatası.';
+      setAudioStatus(message);
+      setVideoStatus(`Sesli video oluşturulamadı: ${message}`);
     } finally {
       window.clearTimeout(stopTimer);
       if (recorder && recorder.state !== 'inactive') recorder.stop();
-      stream?.getTracks().forEach((track) => track.stop());
+      canvasStream?.getTracks().forEach((track) => track.stop());
       setIsRecording(false);
     }
   };
@@ -356,15 +399,30 @@ export function DreamResultView({
     <section className="dream-result-view" aria-label="Rüya yansıması" data-testid="dream-result-view">
       <div className="dream-result-view__visual">
         {interpretation.sceneImageDataUrl && !imageLoadFailed ? (
-          <canvas
-            ref={canvasRef}
-            className="dream-result-view__image"
-            width={canvasWidth}
-            height={canvasHeight}
-            role="img"
-            aria-label={`${interpretation.sceneTheme.sceneCaption} — hareketli rüya sahnesi`}
-            data-testid="img-ruya-sahnesi"
-          />
+          <div className="dream-result-view__player">
+            <canvas
+              ref={canvasRef}
+              className="dream-result-view__image"
+              width={canvasWidth}
+              height={canvasHeight}
+              role="img"
+              aria-label={`${interpretation.sceneTheme.sceneCaption} — hareketli rüya sahnesi`}
+              onPointerDown={handlePlayerInteraction}
+              data-testid="img-ruya-sahnesi"
+            />
+            <button
+              className="dream-result-view__sound-toggle"
+              type="button"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => void setNeyAudioEnabled(!isAudioEnabled)}
+              aria-label={isAudioEnabled ? 'Ney sesini kapat' : 'Ney sesini aç'}
+              aria-pressed={isAudioEnabled}
+              data-testid="button-ney-sesi"
+            >
+              {isAudioEnabled ? <Volume2 size={15} aria-hidden="true" /> : <VolumeX size={15} aria-hidden="true" />}
+              {isAudioEnabled ? 'Ney Sesi Açık' : 'Sesi Aç'}
+            </button>
+          </div>
         ) : (
           <div className="dream-result-view__image-error" role="alert" data-testid="alert-gorsel-hatasi">
             <Sparkles size={18} aria-hidden="true" />
@@ -396,6 +454,7 @@ export function DreamResultView({
               Görseli İndir
             </a>
           )}
+          {audioStatus && <p className="dream-result-view__audio-status" role="status">{audioStatus}</p>}
           {videoStatus && <p className="dream-result-view__video-status" role="status">{videoStatus}</p>}
         </div>
       </div>
