@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpenText, HeartHandshake, MoonStar, Pause, Play, Sparkles } from 'lucide-react';
+import { ArrowUpRight, BookOpenText, Check, HeartHandshake, MoonStar, Pause, Play, Share2, Sparkles } from 'lucide-react';
 import { type DreamInterpretation } from '@workspace/api-client-react';
 import { DreamAnimationCanvas } from '@/components/dream-animation-canvas';
 import './dream-video-scene.css';
@@ -9,7 +9,12 @@ type DreamVideoSceneProps = {
   username: string;
   interpretation: DreamInterpretation;
   nightmareAdvice?: string | null;
+  showCreatorActions?: boolean;
 };
+
+const storySteps = [0, 1, 2];
+const creatorHandle = '@huzuryolculugu';
+const creatorProfileUrl = 'https://www.tiktok.com/@huzuryolculugu';
 
 const shorten = (value: string, maxLength: number) => {
   const text = value.trim();
@@ -19,10 +24,18 @@ const shorten = (value: string, maxLength: number) => {
   return `${excerpt.slice(0, wordEnd > maxLength * 0.65 ? wordEnd : excerpt.length).trimEnd()}…`;
 };
 
-export function DreamVideoScene({ dream, username, interpretation, nightmareAdvice = null }: DreamVideoSceneProps) {
+export function DreamVideoScene({
+  dream,
+  username,
+  interpretation,
+  nightmareAdvice = null,
+  showCreatorActions = false,
+}: DreamVideoSceneProps) {
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState('');
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -72,6 +85,46 @@ export function DreamVideoScene({ dream, username, interpretation, nightmareAdvi
     return Math.min(100, Math.max(0, ((progress - 70) / 30) * 100));
   };
 
+  const shareScene = async () => {
+    const sceneSummary = firstSymbol || 'Rüya üzerine bir yansıma';
+    const shareText = `${sceneSummary}\n${interpretation.sceneTheme.sceneCaption}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}`;
+    setShareFeedback('');
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Rüya Rehberi · Manevi yansıma', text: shareText, url: shareUrl });
+        setShareFeedback('Paylaşım menüsü açıldı.');
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      const copyText = `${shareText}\n${shareUrl}`;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(copyText);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = copyText;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        if (!copied) throw new Error('Clipboard copy was not available');
+      }
+      setIsCopied(true);
+      setShareFeedback('Sahne bağlantısı kopyalandı.');
+      window.setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      setShareFeedback('Paylaşım şu an açılamadı. Lütfen yeniden deneyin.');
+    }
+  };
+
   return (
     <div className="dream-video-layout" data-testid="dream-video-layout">
       <article
@@ -97,7 +150,7 @@ export function DreamVideoScene({ dream, username, interpretation, nightmareAdvi
           aria-valuemax={100}
           aria-valuenow={Math.round(progress)}
         >
-          {[0, 1, 2].map((step) => (
+          {storySteps.map((step) => (
             <span className="dream-story-track" key={step}>
               <span className="dream-story-fill" style={{ width: `${progressForStep(step)}%` }} />
             </span>
@@ -132,11 +185,37 @@ export function DreamVideoScene({ dream, username, interpretation, nightmareAdvi
           </div>
 
           <div className="dream-story-footer">
-            <span>Dokunmadan oynatmayı duraklatabilirsiniz</span>
+            <span>{showCreatorActions ? `${creatorHandle} · Rüya Rehberi` : 'Rüya Rehberi'}</span>
+            <span className="dream-story-footer-hint">Duraklatmak için oynat düğmesine dokunun</span>
             <MoonStar size={13} />
           </div>
         </div>
       </article>
+
+      {showCreatorActions && (
+        <div className="dream-video-actions" data-testid="tiktok-actions">
+          <a
+            href={creatorProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dream-tiktok-follow"
+            data-testid="link-tiktok-takip"
+          >
+            <span>TikTok’ta {creatorHandle} hesabını takip et</span>
+            <ArrowUpRight size={15} aria-hidden="true" />
+          </a>
+          <button
+            type="button"
+            onClick={shareScene}
+            className="dream-story-share"
+            data-testid="button-sahneyi-paylas"
+          >
+            {isCopied ? <Check size={15} /> : <Share2 size={15} />}
+            <span>{isCopied ? 'Bağlantı kopyalandı' : 'Sahne bağlantısını paylaş'}</span>
+          </button>
+          {shareFeedback && <p className="dream-share-feedback" role="status">{shareFeedback}</p>}
+        </div>
+      )}
 
       <section className="dream-video-details" aria-label="Rüyanın tam manevi yansıması">
         <div className="dream-video-details-heading">

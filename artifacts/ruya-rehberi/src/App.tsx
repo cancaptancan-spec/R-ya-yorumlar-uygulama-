@@ -426,6 +426,7 @@ function Home() {
                     username={mode === 'creator' ? username : ''}
                     interpretation={interpretation}
                     nightmareAdvice={dreamType === 'kabus' ? nightmareAdvice : null}
+                    showCreatorActions={mode === 'creator'}
                   />
                   <p className="disclaimer-copy flex gap-2 px-1 text-[10px] leading-5">
                     <CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}
