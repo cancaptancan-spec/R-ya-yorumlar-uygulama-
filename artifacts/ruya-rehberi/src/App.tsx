@@ -51,10 +51,10 @@ const proceduralSceneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
   </defs>
   <rect width="900" height="1200" fill="url(#sky)"/>
   <circle cx="650" cy="290" r="250" fill="url(#glow)"/>
-  <path d="M685 160a112 112 0 1 0 92 168 94 94 0 0 1-92-168Z" fill="#f0d88e" fill-opacity=".92"/>
   <path d="M0 650 170 470l126 122 170-205 186 225 110-112 138 148v220H0Z" fill="#173b3b" fill-opacity=".8"/>
   <path d="M0 740 184 612l140 112 163-162 184 166 114-94 115 94v200H0Z" fill="#1a493f"/>
-  <rect y="820" width="900" height="380" fill="url(#water)"/>
+  <path d="M418 670c-40 97-17 145 47 212 59 62 63 134 7 318H900V739l-185-19-113-50Z" fill="url(#water)" opacity=".95"/>
+  <path d="M482 759c37 69 115 99 147 154s15 111-24 163M518 744c32 63 93 92 124 143s20 98-11 143" fill="none" stroke="#e5ca7d" stroke-opacity=".52" stroke-width="4"/>
   <path d="M105 872c140-25 265-20 392 4s214 25 322 1M34 938c176-20 297-13 442 11s259 19 389-5M96 1010c125-16 257-6 365 13s246 13 347-6M42 1090c154-13 257 0 393 15s262 7 402-8" fill="none" stroke="#ddc779" stroke-opacity=".42" stroke-width="3"/>
   <path d="M0 0h900v1200H0z" fill="url(#geometry)" opacity=".6"/>
   <path d="M165 820 450 335 735 820M260 820 450 494 640 820" fill="none" stroke="#dfc46f" stroke-opacity=".14" stroke-width="3"/>
@@ -76,8 +76,8 @@ function SceneVisual({ scene, className = '', loading = false, showLabel = true 
         data-testid="img-ruya-sahnesi"
       />
       <div className="light-particles absolute inset-0" aria-hidden="true" />
-      {showLabel && <span className="absolute bottom-3 left-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4] backdrop-blur-sm">Sembolik sahne</span>}
-      {loading && <span className="absolute bottom-3 right-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4] backdrop-blur-sm">Görsel sahne hazırlanıyor</span>}
+      {showLabel && <span className="absolute bottom-3 left-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4]">Sembolik sahne</span>}
+      {loading && <div className="scene-shimmer absolute inset-0 grid place-items-center"><span className="rounded-full border border-[#e6d59e]/50 bg-[#102f2d]/70 px-4 py-2 text-[10px] font-medium tracking-wide text-[#f4ecd4]">Rüya sahneniz çiziliyor...</span></div>}
     </div>
   );
 }
