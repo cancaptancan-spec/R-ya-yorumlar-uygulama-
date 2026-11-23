@@ -452,5 +452,8 @@
 @keyframes ken-burns { from { transform: scale(1.04) translate3d(-.4%, 0, 0); } to { transform: scale(1.14) translate3d(.6%, -1%, 0); } }
 .light-particles { pointer-events: none; overflow: hidden; background-image: radial-gradient(circle, rgba(241, 216, 145, .78) 0 1px, transparent 2px), radial-gradient(circle, rgba(230, 200, 122, .58) 0 1px, transparent 2px), radial-gradient(circle, rgba(255, 237, 187, .55) 0 1.5px, transparent 2.5px); background-size: 83px 91px, 127px 139px, 181px 167px; background-position: 13px 25px, 67px 53px, 119px 9px; animation: particles-drift 20s linear infinite; opacity: .62; mix-blend-mode: screen; }
 @keyframes particles-drift { from { background-position: 13px 25px, 67px 53px, 119px 9px; } to { background-position: 96px -66px, -60px -86px, 300px -158px; } }
+.scene-shimmer { pointer-events: none; background: linear-gradient(108deg, rgba(13, 34, 37, .2) 12%, rgba(226, 205, 143, .18) 38%, rgba(13, 34, 37, .2) 64%); background-size: 220% 100%; animation: scene-shimmer 2.8s ease-in-out infinite; }
+.scene-shimmer span { box-shadow: 0 0 26px rgba(229, 208, 140, .2); }
+@keyframes scene-shimmer { from { background-position: 110% 0; } to { background-position: -110% 0; } }
 .portrait-frame { aspect-ratio: 9 / 16; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

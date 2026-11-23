@@ -92,6 +92,8 @@ function Home() {
   const [scene, setScene] = useState<DreamScene | null>(null);
   const [requestError, setRequestError] = useState('');
   const [shareFeedback, setShareFeedback] = useState('');
+  const [shareCardUrl, setShareCardUrl] = useState('');
+  const [shareText, setShareText] = useState('');
   const interpretDream = useInterpretDream();
   const generateScene = useGenerateDreamScene();
 
@@ -106,6 +108,7 @@ function Home() {
     setInterpretation(null);
     setScene(null);
     setShareFeedback('');
+    setShareCardUrl('');
     const input: DreamInput = {
       dream: cleanDream,
       timeOfDream,
@@ -134,117 +137,116 @@ function Home() {
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Canvas context is unavailable');
 
-      let aiImage: HTMLImageElement | null = null;
-      if (scene?.imageDataUrl) {
-        const image = new Image();
-        image.src = scene.imageDataUrl;
-        if (image.complete && image.naturalWidth > 0) aiImage = image;
-      }
-
-      const hasAiScene = aiImage !== null;
-      let contentStart = 180;
-      context.fillStyle = '#102f2d';
+      const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+      background.addColorStop(0, '#174b3f');
+      background.addColorStop(.55, '#12382f');
+      background.addColorStop(1, '#101e30');
+      context.fillStyle = background;
       context.fillRect(0, 0, canvas.width, canvas.height);
-      if (aiImage) {
-        const imageRatio = aiImage.width / aiImage.height;
-        const targetRatio = canvas.width / 710;
-        const cropWidth = imageRatio > targetRatio ? aiImage.height * targetRatio : aiImage.width;
-        const cropHeight = imageRatio > targetRatio ? aiImage.height : aiImage.width / targetRatio;
-        const cropX = (aiImage.width - cropWidth) / 2;
-        const cropY = (aiImage.height - cropHeight) / 2;
-        context.drawImage(aiImage, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, 710);
-        const fade = context.createLinearGradient(0, 470, 0, 760);
-        fade.addColorStop(0, 'rgba(16, 47, 45, 0)');
-        fade.addColorStop(1, '#102f2d');
-        context.fillStyle = fade;
-        context.fillRect(0, 460, canvas.width, 300);
-        context.fillStyle = '#102f2d';
-        context.fillRect(0, 710, canvas.width, 1210);
-        contentStart = 790;
-      } else {
-        const glow = context.createRadialGradient(820, 180, 10, 820, 180, 520);
-        glow.addColorStop(0, 'rgba(201, 169, 91, .24)');
-        glow.addColorStop(1, 'rgba(16, 47, 45, 0)');
-        context.fillStyle = glow;
-        context.fillRect(0, 0, canvas.width, 760);
-        context.strokeStyle = 'rgba(223, 207, 154, .22)';
-        context.lineWidth = 2;
-        for (let x = 60; x < canvas.width; x += 120) {
-          for (let y = 70; y < 690; y += 120) {
-            context.beginPath();
-            context.moveTo(x, y - 28);
-            context.lineTo(x + 28, y);
-            context.lineTo(x, y + 28);
-            context.lineTo(x - 28, y);
-            context.closePath();
-            context.stroke();
-          }
+
+      context.strokeStyle = 'rgba(221, 196, 119, .22)';
+      context.lineWidth = 2;
+      for (let x = 100; x < canvas.width; x += 150) {
+        for (let y = 110; y < canvas.height - 100; y += 150) {
+          context.beginPath();
+          context.moveTo(x, y - 24);
+          context.lineTo(x + 24, y);
+          context.lineTo(x, y + 24);
+          context.lineTo(x - 24, y);
+          context.closePath();
+          context.stroke();
         }
       }
+      context.strokeStyle = '#d8c57f';
+      context.lineWidth = 3;
+      context.strokeRect(44, 44, canvas.width - 88, canvas.height - 88);
+      context.strokeStyle = 'rgba(216, 197, 127, .55)';
+      context.lineWidth = 1;
+      context.strokeRect(60, 60, canvas.width - 120, canvas.height - 120);
 
-      context.fillStyle = '#dfcf9a';
+      context.textAlign = 'center';
+      context.fillStyle = '#e5d08c';
+      context.font = '600 46px "Playfair Display", Georgia, serif';
+      let y = drawCanvasParagraph(context, 'İslami Rüya Tabiri & Manevi Rehber', 112, 165, 856, 60, 2, 'center') + 28;
+      context.fillStyle = '#e1d7bd';
+      context.font = '400 21px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Rüya üzerine bir yansıma', 112, y, 856, 30, 1, 'center') + 44;
+      context.textAlign = 'left';
+
+      context.fillStyle = '#e3d292';
       context.font = '600 24px "DM Sans", sans-serif';
-      context.fillText(hasAiScene ? 'RÜYA ÜZERİNE BİR YANSIMA' : 'MANEVİ YANSI MA', 72, hasAiScene ? 790 : 100);
+      context.fillText('RÜYANIZ', 112, y);
+      y += 42;
       context.fillStyle = '#f4efdf';
-      context.font = '600 38px "Playfair Display", Georgia, serif';
-      context.fillText('Rüyanın Hikmeti', 72, contentStart + 70);
+      context.font = '400 25px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, `“${dream}”`, 112, y, 856, 36, 4) + 32;
 
-      let y = contentStart + 120;
-      context.fillStyle = '#d8c57f';
-      context.font = '600 22px "DM Sans", sans-serif';
-      context.fillText(username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Manevi yansıma', 72, y);
-      y += 38;
+      context.fillStyle = '#e3d292';
+      context.font = '600 24px "DM Sans", sans-serif';
+      context.fillText('RÜYANIN HİKMETİ', 112, y);
+      y += 40;
+      context.fillStyle = '#f4efdf';
+      context.font = '400 24px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, interpretation.wisdom, 112, y, 856, 35, 4) + 30;
+
+      context.fillStyle = '#e3d292';
+      context.font = '600 24px "DM Sans", sans-serif';
+      context.fillText('TABİR ÜZERİNE', 112, y);
+      y += 40;
       context.fillStyle = '#f4efdf';
       context.font = '400 23px "DM Sans", sans-serif';
-      y = drawCanvasParagraph(context, `“${dream}”`, 72, y, 936, 31, 4) + 30;
-      context.fillStyle = '#dfcf9a';
-      context.font = '600 23px "DM Sans", sans-serif';
-      context.fillText('Temel düşünce', 72, y);
-      y += 34;
+      y = drawCanvasParagraph(context, interpretation.detailedInterpretation, 112, y, 856, 34, 8) + 30;
+
+      context.fillStyle = '#e3d292';
+      context.font = '600 24px "DM Sans", sans-serif';
+      context.fillText('DUA VE MANEVİ TAVSİYE', 112, y);
+      y += 40;
       context.fillStyle = '#f4efdf';
       context.font = '400 22px "DM Sans", sans-serif';
-      y = drawCanvasParagraph(context, interpretation.wisdom, 72, y, 936, 30, 4) + 26;
-      context.fillStyle = '#dfcf9a';
-      context.font = '600 23px "DM Sans", sans-serif';
-      context.fillText('Tabir üzerine', 72, y);
-      y += 34;
-      context.fillStyle = '#f4efdf';
-      context.font = '400 21px "DM Sans", sans-serif';
-      y = drawCanvasParagraph(context, interpretation.detailedInterpretation, 72, y, 936, 29, 8) + 24;
-      context.fillStyle = '#dfcf9a';
-      context.font = '600 23px "DM Sans", sans-serif';
-      context.fillText('Dua', 72, y);
-      y += 34;
-      context.fillStyle = '#f4efdf';
-      context.font = '400 21px "DM Sans", sans-serif';
-      y = drawCanvasParagraph(context, interpretation.dua, 72, y, 936, 29, 3) + 22;
-      context.fillStyle = '#d8c57f';
-      context.font = '500 18px "DM Sans", sans-serif';
-      drawCanvasParagraph(context, `${interpretation.asmaSuggestion} ${interpretation.dhikr}`, 72, y, 936, 25, 3);
-      context.fillStyle = '#c4cbbb';
-      context.font = '400 16px "DM Sans", sans-serif';
-      context.fillText('Bu yansıma kesin bilgi veya dinî hüküm değildir.', 72, 1870);
+      y = drawCanvasParagraph(context, `${interpretation.dua} ${interpretation.asmaSuggestion} ${interpretation.dhikr}`, 112, y, 856, 32, 6);
 
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Card export failed')), 'image/png');
-      });
-      const file = new File([blob], 'manevi-ruya-karti.png', { type: 'image/png' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Manevi Rüya Kartı' });
-        setShareFeedback('Manevi kart paylaşım menüsünde hazır.');
+      context.textAlign = 'center';
+      context.fillStyle = '#e5d08c';
+      context.font = '500 25px "Playfair Display", Georgia, serif';
+      context.fillText('Hayra yorunuz ki hayır olsun', canvas.width / 2, 1820);
+      context.fillStyle = '#d6d4c8';
+      context.font = '400 17px "DM Sans", sans-serif';
+      context.fillText('Bu yansıma kesin bilgi veya dinî hüküm değildir.', canvas.width / 2, 1860);
+
+      const imageUrl = canvas.toDataURL('image/png');
+      if (!imageUrl.startsWith('data:image/png;base64,')) throw new Error('Canvas did not produce a PNG');
+      setShareText([
+        'İslami Rüya Tabiri & Manevi Rehber',
+        `Rüyam: ${dream}`,
+        `Rüyanın hikmeti: ${interpretation.wisdom}`,
+        `Tabir: ${interpretation.detailedInterpretation}`,
+        `Dua ve manevi tavsiye: ${interpretation.dua} ${interpretation.asmaSuggestion} ${interpretation.dhikr}`,
+        'Hayra yorunuz ki hayır olsun',
+      ].join('\n\n'));
+      setShareCardUrl(imageUrl);
+    } catch {
+      setShareFeedback('Kart oluşturulamadı. Lütfen yeniden deneyin.');
+    }
+  };
+
+  const copyShareText = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
       } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'manevi-ruya-karti.png';
-        link.click();
-        URL.revokeObjectURL(url);
-        setShareFeedback('Manevi kart cihazınıza indirildi.');
+        const textarea = document.createElement('textarea');
+        textarea.value = shareText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        if (!copied) throw new Error('Clipboard copy unavailable');
       }
-    } catch (error) {
-      if ((error as { name?: string })?.name !== 'AbortError') {
-        setShareFeedback('Kart oluşturulamadı. Lütfen yeniden deneyin.');
-      }
+      setShareFeedback('Metin kopyalandı.');
+    } catch {
+      setShareFeedback('Metin kopyalanamadı. Kart metnini seçip kopyalayabilirsiniz.');
     }
   };
 
@@ -402,7 +404,7 @@ function Home() {
               )}
               {busy && (
                 <div className="flex h-full min-h-[300px] flex-col justify-center gap-5" role="status" aria-live="polite" data-testid="status-yorum-yukleniyor">
-                  <SceneVisual scene={null} className="h-[188px] shrink-0" />
+                  <SceneVisual scene={null} className="h-[188px] shrink-0" loading />
                   <div className="h-4 w-2/3 animate-pulse rounded bg-[#d8d8c9]" />
                   <div className="h-3 w-full animate-pulse rounded bg-[#d8d8c9]" />
                   <div className="h-3 w-4/5 animate-pulse rounded bg-[#d8d8c9]" />
@@ -415,13 +417,13 @@ function Home() {
                     <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#927c42]">Yansımanız</p>
                     <span className="rounded-full border border-[#c9c2af] px-2.5 py-1 text-[9px] text-[#738077]">Size özel</span>
                   </div>
+                  <SceneVisual scene={scene} className="h-[210px]" loading={generateScene.isPending} />
                   {dreamType === 'kabus' && (
                     <div className="rounded-2xl border border-[#d7c596] bg-[#f3ecd9] p-4" data-testid="card-kabus-adabi">
                       <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[.17em] text-[#927c42]">Önce: Peygamberimizin tavsiyesi</p>
                       <p className="text-[11px] leading-5 text-[#4b584c]">{nightmareAdvice}</p>
                     </div>
                   )}
-                  <SceneVisual scene={scene} className="h-[210px]" loading={generateScene.isPending} />
                   <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
                     <h3 className="serif text-[19px] text-[#1c4138]">Rüyanın Hikmeti &amp; Temel Semboller</h3>
                     <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.wisdom}</p>
@@ -467,11 +469,78 @@ function Home() {
         </div>
       </section>
 
+      {shareCardUrl && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#081a1a]/80 p-4" data-testid="modal-manevi-kart">
+          <section role="dialog" aria-modal="true" aria-labelledby="share-card-title" className="max-h-[94dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-[#c8b477]/60 bg-[#f7f4e9] p-5 text-[#183b35] shadow-2xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 id="share-card-title" className="serif text-xl">Manevi kartınız hazır</h2>
+              <button type="button" onClick={() => setShareCardUrl('')} className="rounded-full border border-[#c8b477] px-3 py-1.5 text-xs font-semibold" data-testid="button-kart-kapat">Kapat</button>
+            </div>
+            <img src={shareCardUrl} alt="Paylaşmaya hazır manevi rüya kartı" className="mx-auto max-h-[62dvh] rounded-xl border border-[#c8b477]/40" data-testid="img-manevi-kart" />
+            <p className="my-3 text-center text-[11px] text-[#68766c]">Görseli telefonunuza kaydetmek için basılı tutabilirsiniz.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <a href={shareCardUrl} download="manevi-ruya-karti.png" className="rounded-full bg-[#173d35] px-3 py-3 text-center text-[11px] font-semibold text-[#f6f1e3]" data-testid="link-gorseli-indir">Görseli İndir</a>
+              <button type="button" onClick={copyShareText} className="rounded-full border border-[#b5a267] bg-[#ede5cd] px-3 py-3 text-[11px] font-semibold text-[#425747]" data-testid="button-metni-kopyala">Metni Kopyala</button>
+            </div>
+            {shareFeedback && <p role="status" className="mt-3 text-center text-[11px] text-[#617267]" data-testid="status-kart-kopyalama">{shareFeedback}</p>}
+          </section>
+        </div>
+      )}
+
       <footer className="border-t border-[#ddd7c9] bg-[#eeeadf] px-5 py-6 text-center">
         <p className="text-[10px] leading-5 text-[#748078]">Rüya yorumları kesin bilgi, gayb haberi veya fetva değildir. Dinî sorularınız için yetkin bir uzmana danışın.</p>
       </footer>
     </main>
   );
+}
+
+function drawCanvasParagraph(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number,
+  align: CanvasTextAlign = 'left',
+) {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = '';
+  let truncated = false;
+
+  for (const word of words) {
+    const nextLine = line ? `${line} ${word}` : word;
+    if (context.measureText(nextLine).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) {
+        truncated = true;
+        break;
+      }
+    } else {
+      line = nextLine;
+    }
+  }
+
+  if (!truncated && line) lines.push(line);
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    truncated = true;
+  }
+  if (truncated && lines.length) {
+    let lastLine = lines[lines.length - 1];
+    while (lastLine && context.measureText(`${lastLine}…`).width > maxWidth) {
+      lastLine = lastLine.slice(0, -1);
+    }
+    lines[lines.length - 1] = `${lastLine.trimEnd()}…`;
+  }
+
+  const previousAlign = context.textAlign;
+  context.textAlign = align;
+  lines.forEach((lineText, index) => context.fillText(lineText, x, y + index * lineHeight));
+  context.textAlign = previousAlign;
+  return y + lines.length * lineHeight;
 }
 
 function CreatorPortrait({ dream, username, interpretation, scene, sceneLoading, nightmare }: {
