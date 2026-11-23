@@ -39,17 +39,33 @@ export interface DreamInput {
   username?: string;
 }
 
-export interface DreamSceneInput {
-  /**
-     * @minLength 10
-     * @maxLength 1200
-     */
-  scenePrompt: string;
-}
-
 export interface DreamSymbol {
   symbol: string;
   meaning: string;
+}
+
+export type DreamSceneThemeAtmosphere = typeof DreamSceneThemeAtmosphere[keyof typeof DreamSceneThemeAtmosphere];
+
+
+export const DreamSceneThemeAtmosphere = {
+  water_moon: 'water_moon',
+  light_sky: 'light_sky',
+  nature_peace: 'nature_peace',
+  night_stars: 'night_stars',
+  golden_mosque: 'golden_mosque',
+} as const;
+
+export interface DreamSceneTheme {
+  atmosphere: DreamSceneThemeAtmosphere;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  primaryColor: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  accentColor: string;
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  sceneCaption: string;
 }
 
 export interface DreamInterpretation {
@@ -61,12 +77,8 @@ export interface DreamInterpretation {
   dhikr: string;
   /** @nullable */
   nightmareAdvice: string | null;
-  scenePrompt: string;
+  sceneTheme: DreamSceneTheme;
   disclaimer: string;
-}
-
-export interface DreamScene {
-  imageDataUrl: string;
 }
 
 export interface ApiError {

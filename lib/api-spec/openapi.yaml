@@ -11,7 +11,7 @@ tags:
   - name: health
     description: Health operations
   - name: dreams
-    description: Private dream interpretation and symbolic scene generation
+    description: Private dream interpretation and locally rendered symbolic scenes
 paths:
   /healthz:
     get:
@@ -42,42 +42,11 @@ paths:
               $ref: "#/components/schemas/DreamInput"
       responses:
         "200":
-          description: Interpretation and a symbolic scene prompt
+          description: Interpretation and a structured symbolic scene theme
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/DreamInterpretation"
-        "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-        "502":
-          description: AI service unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-  /dreams/scene:
-    post:
-      operationId: generateDreamScene
-      tags: [dreams]
-      summary: Generate a symbolic dream scene
-      description: Generates a serene, symbolic illustration without people or religious figures.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DreamSceneInput"
-      responses:
-        "200":
-          description: Generated scene as a temporary data URL
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DreamScene"
         "400":
           description: Invalid request
           content:
@@ -116,14 +85,6 @@ components:
           type: string
           maxLength: 40
       required: [dream, timeOfDream, dreamType]
-    DreamSceneInput:
-      type: object
-      properties:
-        scenePrompt:
-          type: string
-          minLength: 10
-          maxLength: 1200
-      required: [scenePrompt]
     DreamSymbol:
       type: object
       properties:
@@ -151,8 +112,8 @@ components:
           type: string
         nightmareAdvice:
           type: ["string", "null"]
-        scenePrompt:
-          type: string
+        sceneTheme:
+          $ref: "#/components/schemas/DreamSceneTheme"
         disclaimer:
           type: string
       required:
@@ -163,14 +124,25 @@ components:
         - asmaSuggestion
         - dhikr
         - nightmareAdvice
-        - scenePrompt
+        - sceneTheme
         - disclaimer
-    DreamScene:
+    DreamSceneTheme:
       type: object
       properties:
-        imageDataUrl:
+        atmosphere:
           type: string
-      required: [imageDataUrl]
+          enum: [water_moon, light_sky, nature_peace, night_stars, golden_mosque]
+        primaryColor:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        accentColor:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        sceneCaption:
+          type: string
+          minLength: 1
+          maxLength: 180
+      required: [atmosphere, primaryColor, accentColor, sceneCaption]
     ApiError:
       type: object
       properties:

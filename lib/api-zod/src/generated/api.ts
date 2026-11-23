@@ -35,6 +35,12 @@ export const InterpretDreamBody = zod.object({
   "username": zod.string().max(interpretDreamBodyUsernameMax).optional()
 })
 
+export const interpretDreamResponseSceneThemePrimaryColorRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const interpretDreamResponseSceneThemeAccentColorRegExp = new RegExp('^#[0-9A-Fa-f]{6}$');
+export const interpretDreamResponseSceneThemeSceneCaptionMax = 180;
+
+
+
 export const InterpretDreamResponse = zod.object({
   "wisdom": zod.string(),
   "symbols": zod.array(zod.object({
@@ -46,26 +52,13 @@ export const InterpretDreamResponse = zod.object({
   "asmaSuggestion": zod.string(),
   "dhikr": zod.string(),
   "nightmareAdvice": zod.string().nullable(),
-  "scenePrompt": zod.string(),
+  "sceneTheme": zod.object({
+  "atmosphere": zod.enum(['water_moon', 'light_sky', 'nature_peace', 'night_stars', 'golden_mosque']),
+  "primaryColor": zod.string().regex(interpretDreamResponseSceneThemePrimaryColorRegExp),
+  "accentColor": zod.string().regex(interpretDreamResponseSceneThemeAccentColorRegExp),
+  "sceneCaption": zod.string().min(1).max(interpretDreamResponseSceneThemeSceneCaptionMax)
+}),
   "disclaimer": zod.string()
-})
-
-
-/**
- * Generates a serene, symbolic illustration without people or religious figures.
- * @summary Generate a symbolic dream scene
- */
-export const generateDreamSceneBodyScenePromptMin = 10;
-export const generateDreamSceneBodyScenePromptMax = 1200;
-
-
-
-export const GenerateDreamSceneBody = zod.object({
-  "scenePrompt": zod.string().min(generateDreamSceneBodyScenePromptMin).max(generateDreamSceneBodyScenePromptMax)
-})
-
-export const GenerateDreamSceneResponse = zod.object({
-  "imageDataUrl": zod.string()
 })
 
 

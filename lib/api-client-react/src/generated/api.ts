@@ -28,8 +28,6 @@ import type {
   ApiError,
   DreamInput,
   DreamInterpretation,
-  DreamScene,
-  DreamSceneInput,
   HealthStatus
 } from './api.schemas';
 
@@ -249,94 +247,5 @@ export const useInterpretDream = <TError = ErrorType<ApiError>,
         TContext
       > => {
       return useMutation(getInterpretDreamMutationOptions(options), queryClient);
-    }
-
-export const getGenerateDreamSceneUrl = () => {
-
-
-
-
-  return `/api/dreams/scene`
-}
-
-/**
- * Generates a serene, symbolic illustration without people or religious figures.
- * @summary Generate a symbolic dream scene
- */
-export const generateDreamScene = async (dreamSceneInput: DreamSceneInput, options?: Parameters<typeof customFetch>[1]): Promise<DreamScene> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<DreamScene>(getGenerateDreamSceneUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(dreamSceneInput)
-  }
-);}
-
-
-
-
-
-export const getGenerateDreamSceneMutationKey = () => ['generateDreamScene'] as const;
-
-export const getGenerateDreamSceneMutationOptions = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateDreamScene>>, TError,GenerateDreamSceneMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof generateDreamScene>>, TError,GenerateDreamSceneMutationVariables, TContext> => {
-
-const mutationKey = getGenerateDreamSceneMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateDreamScene>>, GenerateDreamSceneMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  generateDreamScene(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type GenerateDreamSceneMutationResult = NonNullable<Awaited<ReturnType<typeof generateDreamScene>>>
-    export type GenerateDreamSceneMutationBody = BodyType<DreamSceneInput>
-    export type GenerateDreamSceneMutationError = ErrorType<ApiError>
-    export type GenerateDreamSceneMutationVariables = {data: BodyType<DreamSceneInput>}
-
-    /**
- * @summary Generate a symbolic dream scene
- */
-export const useGenerateDreamScene = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateDreamScene>>, TError,GenerateDreamSceneMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof generateDreamScene>>,
-        TError,
-        GenerateDreamSceneMutationVariables,
-        TContext
-      > => {
-      return useMutation(getGenerateDreamSceneMutationOptions(options), queryClient);
     }
 

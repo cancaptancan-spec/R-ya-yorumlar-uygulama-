@@ -4,7 +4,12 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
-import { useGenerateDreamScene, useInterpretDream } from '@workspace/api-client-react';
+import { useInterpretDream, type DreamInterpretation } from '@workspace/api-client-react';
+import {
+  DreamAnimationCanvas,
+  drawDreamSceneFrame,
+  type DreamSceneTheme,
+} from '@/components/dream-animation-canvas';
 import {
   ArrowDown,
   ArrowRight,
@@ -29,58 +34,12 @@ const queryClient = new QueryClient();
 type TimeOfDream = 'seher' | 'gece' | 'gunduz';
 type DreamType = 'huzurlu' | 'kabus' | 'tekrarlayan';
 type DreamInput = { dream: string; timeOfDream: TimeOfDream; dreamType: DreamType; username?: string };
-type DreamInterpretation = {
-  wisdom: string;
-  symbols: { symbol: string; meaning: string }[];
-  detailedInterpretation: string;
-  dua: string;
-  asmaSuggestion: string;
-  dhikr: string;
-  nightmareAdvice: string | null;
-  scenePrompt: string;
-  disclaimer: string;
+const LOADING_SCENE_THEME: DreamSceneTheme = {
+  atmosphere: 'night_stars',
+  primaryColor: '#142c3b',
+  accentColor: '#e5c879',
+  sceneCaption: 'Rüyanızın sembolleriyle şekillenen sahne hazırlanıyor.',
 };
-type DreamScene = { imageDataUrl: string };
-
-const proceduralSceneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#102a39"/><stop offset=".58" stop-color="#145043"/><stop offset="1" stop-color="#1a5144"/></linearGradient>
-    <radialGradient id="glow"><stop stop-color="#f3d98a" stop-opacity=".72"/><stop offset="1" stop-color="#e8c66e" stop-opacity="0"/></radialGradient>
-    <pattern id="geometry" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M60 4 116 60 60 116 4 60Z M60 28 92 60 60 92 28 60Z" fill="none" stroke="#e1c77a" stroke-opacity=".16" stroke-width="1.5"/><circle cx="60" cy="60" r="4" fill="#e1c77a" fill-opacity=".22"/></pattern>
-    <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#174a49"/><stop offset="1" stop-color="#142f41"/></linearGradient>
-  </defs>
-  <rect width="900" height="1200" fill="url(#sky)"/>
-  <circle cx="650" cy="290" r="250" fill="url(#glow)"/>
-  <path d="M0 650 170 470l126 122 170-205 186 225 110-112 138 148v220H0Z" fill="#173b3b" fill-opacity=".8"/>
-  <path d="M0 740 184 612l140 112 163-162 184 166 114-94 115 94v200H0Z" fill="#1a493f"/>
-  <path d="M418 670c-40 97-17 145 47 212 59 62 63 134 7 318H900V739l-185-19-113-50Z" fill="url(#water)" opacity=".95"/>
-  <path d="M482 759c37 69 115 99 147 154s15 111-24 163M518 744c32 63 93 92 124 143s20 98-11 143" fill="none" stroke="#e5ca7d" stroke-opacity=".52" stroke-width="4"/>
-  <path d="M105 872c140-25 265-20 392 4s214 25 322 1M34 938c176-20 297-13 442 11s259 19 389-5M96 1010c125-16 257-6 365 13s246 13 347-6M42 1090c154-13 257 0 393 15s262 7 402-8" fill="none" stroke="#ddc779" stroke-opacity=".42" stroke-width="3"/>
-  <path d="M0 0h900v1200H0z" fill="url(#geometry)" opacity=".6"/>
-  <path d="M165 820 450 335 735 820M260 820 450 494 640 820" fill="none" stroke="#dfc46f" stroke-opacity=".14" stroke-width="3"/>
-</svg>`;
-const proceduralSceneDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(proceduralSceneSvg)}`;
-
-function SceneVisual({ scene, className = '', loading = false, showLabel = true }: {
-  scene: DreamScene | null;
-  className?: string;
-  loading?: boolean;
-  showLabel?: boolean;
-}) {
-  return (
-    <div className={`scene-frame relative overflow-hidden rounded-2xl bg-[#183e38] ${className}`} data-testid="visual-ruya-sahnesi">
-      <img
-        src={scene?.imageDataUrl ?? proceduralSceneDataUrl}
-        alt="Sükûnetli bir manzara, ay ışığı ve altın geometrik desenlerle sembolik rüya sahnesi"
-        className="scene-image h-full w-full object-cover"
-        data-testid="img-ruya-sahnesi"
-      />
-      <div className="light-particles absolute inset-0" aria-hidden="true" />
-      {showLabel && <span className="absolute bottom-3 left-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4]">Sembolik sahne</span>}
-      {loading && <div className="scene-shimmer absolute inset-0 grid place-items-center"><span className="rounded-full border border-[#e6d59e]/50 bg-[#102f2d]/70 px-4 py-2 text-[10px] font-medium tracking-wide text-[#f4ecd4]">Rüya sahneniz çiziliyor...</span></div>}
-    </div>
-  );
-}
 
 function Home() {
   const [mode, setMode] = useState<'reflection' | 'creator'>('reflection');
@@ -89,13 +48,11 @@ function Home() {
   const [dreamType, setDreamType] = useState<DreamType>('huzurlu');
   const [username, setUsername] = useState('');
   const [interpretation, setInterpretation] = useState<DreamInterpretation | null>(null);
-  const [scene, setScene] = useState<DreamScene | null>(null);
   const [requestError, setRequestError] = useState('');
   const [shareFeedback, setShareFeedback] = useState('');
   const [shareCardUrl, setShareCardUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const interpretDream = useInterpretDream();
-  const generateScene = useGenerateDreamScene();
 
   const submitDream = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -106,7 +63,6 @@ function Home() {
     }
     setRequestError('');
     setInterpretation(null);
-    setScene(null);
     setShareFeedback('');
     setShareCardUrl('');
     const input: DreamInput = {
@@ -118,10 +74,6 @@ function Home() {
     interpretDream.mutate({ data: input }, {
       onSuccess: (result) => {
         setInterpretation(result);
-        generateScene.mutate({ data: { scenePrompt: result.scenePrompt } }, {
-          onSuccess: (generated) => setScene(generated),
-          onError: () => setScene(null),
-        });
       },
       onError: () => setRequestError('Yorumunuz şu an hazırlanamadı. Lütfen bağlantınızı kontrol edip yeniden deneyin.'),
     });
@@ -144,10 +96,24 @@ function Home() {
       context.fillStyle = background;
       context.fillRect(0, 0, canvas.width, canvas.height);
 
+      const sceneHeight = 570;
+      drawDreamSceneFrame(context, interpretation.sceneTheme, canvas.width, sceneHeight, 2.4);
+      const sceneFade = context.createLinearGradient(0, sceneHeight * 0.57, 0, sceneHeight + 100);
+      sceneFade.addColorStop(0, 'rgba(18, 56, 47, 0)');
+      sceneFade.addColorStop(1, '#12382f');
+      context.fillStyle = sceneFade;
+      context.fillRect(0, sceneHeight * 0.57, canvas.width, sceneHeight + 100);
+
+      const titleShade = context.createLinearGradient(0, 0, 0, 220);
+      titleShade.addColorStop(0, 'rgba(8, 24, 32, .55)');
+      titleShade.addColorStop(1, 'rgba(8, 24, 32, 0)');
+      context.fillStyle = titleShade;
+      context.fillRect(0, 0, canvas.width, 220);
+
       context.strokeStyle = 'rgba(221, 196, 119, .22)';
       context.lineWidth = 2;
       for (let x = 100; x < canvas.width; x += 150) {
-        for (let y = 110; y < canvas.height - 100; y += 150) {
+        for (let y = sceneHeight + 80; y < canvas.height - 100; y += 150) {
           context.beginPath();
           context.moveTo(x, y - 24);
           context.lineTo(x + 24, y);
@@ -166,12 +132,19 @@ function Home() {
 
       context.textAlign = 'center';
       context.fillStyle = '#e5d08c';
-      context.font = '600 46px "Playfair Display", Georgia, serif';
-      let y = drawCanvasParagraph(context, 'İslami Rüya Tabiri & Manevi Rehber', 112, 165, 856, 60, 2, 'center') + 28;
+      context.font = '600 42px "Playfair Display", Georgia, serif';
+      drawCanvasParagraph(context, 'İslami Rüya Tabiri & Manevi Rehber', 540, 112, 856, 54, 2, 'center');
       context.fillStyle = '#e1d7bd';
-      context.font = '400 21px "DM Sans", sans-serif';
-      y = drawCanvasParagraph(context, username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Rüya üzerine bir yansıma', 112, y, 856, 30, 1, 'center') + 44;
+      context.font = '400 20px "DM Sans", sans-serif';
+      drawCanvasParagraph(context, username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Rüya üzerine bir yansıma', 540, 165, 856, 30, 1, 'center');
       context.textAlign = 'left';
+      context.fillStyle = '#e5d08c';
+      context.font = '600 17px "DM Sans", sans-serif';
+      context.fillText('CANLI SAHNE', 80, 485);
+      context.fillStyle = '#f4ecd7';
+      context.font = '400 20px "DM Sans", sans-serif';
+      drawCanvasParagraph(context, interpretation.sceneTheme.sceneCaption, 80, 520, 920, 28, 2);
+      let y = sceneHeight + 68;
 
       context.fillStyle = '#e3d292';
       context.font = '600 24px "DM Sans", sans-serif';
@@ -404,7 +377,7 @@ function Home() {
               )}
               {busy && (
                 <div className="flex h-full min-h-[300px] flex-col justify-center gap-5" role="status" aria-live="polite" data-testid="status-yorum-yukleniyor">
-                  <SceneVisual scene={null} className="h-[188px] shrink-0" loading />
+                  <DreamAnimationCanvas theme={LOADING_SCENE_THEME} className="h-[188px] shrink-0 rounded-2xl" />
                   <div className="h-4 w-2/3 animate-pulse rounded bg-[#d8d8c9]" />
                   <div className="h-3 w-full animate-pulse rounded bg-[#d8d8c9]" />
                   <div className="h-3 w-4/5 animate-pulse rounded bg-[#d8d8c9]" />
@@ -417,7 +390,7 @@ function Home() {
                     <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#927c42]">Yansımanız</p>
                     <span className="rounded-full border border-[#c9c2af] px-2.5 py-1 text-[9px] text-[#738077]">Size özel</span>
                   </div>
-                  <SceneVisual scene={scene} className="h-[210px]" loading={generateScene.isPending} />
+                  <DreamAnimationCanvas theme={interpretation.sceneTheme} className="h-[210px] shrink-0 rounded-2xl" />
                   {dreamType === 'kabus' && (
                     <div className="rounded-2xl border border-[#d7c596] bg-[#f3ecd9] p-4" data-testid="card-kabus-adabi">
                       <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[.17em] text-[#927c42]">Önce: Peygamberimizin tavsiyesi</p>
@@ -453,7 +426,7 @@ function Home() {
               )}
               {interpretation && mode === 'creator' && (
                 <div className="fade-up flex justify-center" data-testid="panel-tiktok-yorumu">
-                  <CreatorPortrait dream={dream} username={username} interpretation={interpretation} scene={scene} sceneLoading={generateScene.isPending} nightmare={dreamType === 'kabus' ? nightmareAdvice : null} />
+                  <CreatorPortrait dream={dream} username={username} interpretation={interpretation} theme={interpretation.sceneTheme} nightmare={dreamType === 'kabus' ? nightmareAdvice : null} />
                 </div>
               )}
               {interpretation && (
@@ -543,19 +516,18 @@ function drawCanvasParagraph(
   return y + lines.length * lineHeight;
 }
 
-function CreatorPortrait({ dream, username, interpretation, scene, sceneLoading, nightmare }: {
+function CreatorPortrait({ dream, username, interpretation, theme, nightmare }: {
   dream: string;
   username: string;
   interpretation: DreamInterpretation;
-  scene: DreamScene | null;
-  sceneLoading: boolean;
+  theme: DreamSceneTheme;
   nightmare: string | null;
 }) {
   return (
     <article className="portrait-frame relative flex w-full max-w-[310px] flex-col overflow-hidden rounded-[25px] border border-[#c8b477]/45 bg-[#102f2d] text-[#f4efdf] shadow-[0_16px_48px_-18px_rgba(16,43,39,.55)]" data-testid="card-dikey-paylasim">
       <div className="geometry absolute inset-0 opacity-25" />
       <div className="relative h-[37%] min-h-0 shrink-0 overflow-hidden">
-        <SceneVisual scene={scene} className="h-full rounded-none" loading={sceneLoading} showLabel={false} />
+        <DreamAnimationCanvas theme={theme} className="h-full rounded-none" showCaption={false} />
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#102f2d] to-transparent" />
         <div className="absolute bottom-3 left-5 right-5 flex items-center justify-between">
           <span className="text-[8px] font-semibold uppercase tracking-[.2em] text-[#dfcf9a]">Rüya üzerine bir yansıma</span>

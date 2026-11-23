@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { DreamSceneTheme } from './dreamSceneTheme';
 import type { DreamSymbol } from './dreamSymbol';
 
 export interface DreamInterpretation {
@@ -16,6 +17,6 @@ export interface DreamInterpretation {
   dhikr: string;
   /** @nullable */
   nightmareAdvice: string | null;
-  scenePrompt: string;
+  sceneTheme: DreamSceneTheme;
   disclaimer: string;
 }

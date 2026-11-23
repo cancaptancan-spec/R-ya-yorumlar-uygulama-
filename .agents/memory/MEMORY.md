@@ -1,0 +1,1 @@
+- [Local dream scene rendering](local-dream-scene-rendering.md) — this app must render symbolic scenes in Canvas rather than external image APIs.
