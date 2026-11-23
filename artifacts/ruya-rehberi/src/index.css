@@ -693,7 +693,7 @@
 .ruya-app .gold-cta > * { position: relative; z-index: 1; }
 .ruya-app .gold-cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(194, 165, 94, .24); }
 .ruya-app .gold-cta:disabled { color: rgba(32, 28, 17, .6); }
-.ruya-app .result-panel { min-height: 350px; color: var(--ink); }
+.ruya-app .result-panel { min-height: 350px; color: var(--ink); scroll-margin-top: 1.25rem; }
 .ruya-app .empty-state-icon { color: #e1ca8b; border: 1px solid rgba(217, 189, 120, .4); background: rgba(171, 143, 75, .13); }
 .ruya-app .empty-state-title { color: #f1ead8; }
 .ruya-app .empty-state-copy { color: #b6b8a9; }

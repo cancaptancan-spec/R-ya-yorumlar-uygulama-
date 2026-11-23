@@ -73,7 +73,7 @@ export function DreamVideoScene({ dream, username, interpretation, nightmareAdvi
   };
 
   return (
-    <div className="dream-video-layout" data-testid="panel-tiktok-yorumu">
+    <div className="dream-video-layout" data-testid="dream-video-layout">
       <article
         className="dream-story-card"
         aria-label="Takipçi rüyası için 9:16 dikey video sahnesi"

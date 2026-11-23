@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useState } from 'react';
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -14,12 +14,9 @@ import { DreamVideoScene } from '@/components/dream-video-scene';
 import {
   ArrowDown,
   ArrowRight,
-  BookOpenText,
   CircleHelp,
-  Compass,
   Clock3,
   Feather,
-  HeartHandshake,
   MoonStar,
   Sparkles,
   Sun,
@@ -56,6 +53,16 @@ function Home() {
   const [shareCardUrl, setShareCardUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const interpretDream = useInterpretDream();
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!interpretation) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+      resultsRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [interpretation]);
 
   const submitDream = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -389,7 +396,7 @@ function Home() {
               <p className="form-disclaimer mt-3 text-center text-[10px] leading-5">Bu içerik düşünmeye yardımcı olur; kesin bilgi veya dinî hüküm değildir.</p>
             </form>
 
-            <div className="glass-panel result-panel min-h-[350px] rounded-[24px] p-5 sm:p-7">
+            <div ref={resultsRef} id="ruya-sonucu" className="glass-panel result-panel min-h-[350px] rounded-[24px] p-5 sm:p-7">
               {!interpretation && !busy && (
                 <div className="flex h-full min-h-[300px] flex-col justify-between">
                   <div>
@@ -412,62 +419,18 @@ function Home() {
                   <p className="status-copy text-center text-xs">Rüyanız özenle ele alınıyor; sahneniz hazırlanıyor…</p>
                 </div>
               )}
-              {interpretation && mode === 'reflection' && (
-                <div className="fade-up space-y-4" data-testid="panel-ruya-yorumu">
-                  <div className="flex items-center justify-between">
-                    <p className="section-eyebrow text-[10px] font-bold uppercase tracking-[.18em]">Yansımanız</p>
-                    <span className="result-badge rounded-full px-2.5 py-1 text-[9px]">Size özel</span>
-                  </div>
-                  <DreamAnimationCanvas theme={interpretation.sceneTheme} className="cinematic-scene h-[210px] shrink-0 rounded-2xl" />
-                  {dreamType === 'kabus' && (
-                    <div className="kabus-note rounded-2xl p-4" data-testid="card-kabus-adabi">
-                      <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[.17em]">Önce: Peygamberimizin tavsiyesi</p>
-                      <p className="text-[11px] leading-5">{nightmareAdvice}</p>
-                    </div>
-                  )}
-                  <article className="glass-card result-card rounded-2xl p-4">
-                    <div className="result-card-heading flex items-start gap-3">
-                      <span className="card-icon"><Compass size={15} strokeWidth={1.6} /></span>
-                      <h3 className="result-card-title serif text-[19px]">Rüyanın Hikmeti &amp; Temel Semboller</h3>
-                    </div>
-                    <p className="result-card-copy mt-2 text-[12px] leading-[1.8]">{interpretation.wisdom}</p>
-                    {!!interpretation.symbols.length && (
-                      <div className="symbol-list mt-4 space-y-3 border-t pt-3">
-                        {interpretation.symbols.map((item, index) => (
-                          <div key={`${item.symbol}-${index}`} className="symbol-item border-l pl-3">
-                            <p className="text-[11px] font-semibold">{item.symbol}</p>
-                            <p className="result-card-copy mt-0.5 text-[11px] leading-5">{item.meaning}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </article>
-                  <article className="glass-card result-card rounded-2xl p-4">
-                    <div className="result-card-heading flex items-start gap-3">
-                      <span className="card-icon"><BookOpenText size={15} strokeWidth={1.6} /></span>
-                      <h3 className="result-card-title serif text-[18px]">İbn-i Şirin ve İmam Nablusi Külliyatına Göre Tabiri</h3>
-                    </div>
-                    <p className="result-card-copy mt-2 text-[12px] leading-[1.8]">{interpretation.detailedInterpretation}</p>
-                  </article>
-                  <article className="glass-card result-card rounded-2xl p-4">
-                    <div className="result-card-heading flex items-start gap-3">
-                      <span className="card-icon"><HeartHandshake size={15} strokeWidth={1.6} /></span>
-                      <h3 className="result-card-title serif text-[18px]">Manevi Tavsiye, Dua ve Esmaül Hüsna Önerisi</h3>
-                    </div>
-                    <p className="result-card-copy mt-2 text-[12px] leading-[1.8]">{interpretation.dua}</p>
-                    <p className="result-card-copy card-note mt-3 border-t pt-3 text-[11px] leading-5">{interpretation.asmaSuggestion}</p>
-                    <p className="result-card-copy card-note mt-3 border-t pt-3 text-[11px] leading-5">{interpretation.dhikr}</p>
-                  </article>
-                  <p className="disclaimer-copy flex gap-2 px-1 text-[10px] leading-5"><CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}</p>
+              {interpretation && (
+                <div className="fade-up space-y-4" data-testid={mode === 'creator' ? 'panel-tiktok-yorumu' : 'panel-ruya-yorumu'}>
+                  <DreamVideoScene
+                    dream={dream}
+                    username={mode === 'creator' ? username : ''}
+                    interpretation={interpretation}
+                    nightmareAdvice={dreamType === 'kabus' ? nightmareAdvice : null}
+                  />
+                  <p className="disclaimer-copy flex gap-2 px-1 text-[10px] leading-5">
+                    <CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}
+                  </p>
                 </div>
-              )}
-              {interpretation && mode === 'creator' && (
-                <DreamVideoScene
-                  dream={dream}
-                  username={username}
-                  interpretation={interpretation}
-                  nightmareAdvice={dreamType === 'kabus' ? nightmareAdvice : null}
-                />
               )}
               {interpretation && (
                 <div className="share-actions mt-5 border-t pt-5">
