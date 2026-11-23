@@ -134,36 +134,62 @@ function Home() {
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Canvas context is unavailable');
 
-      const image = new Image();
-      image.src = scene?.imageDataUrl ?? proceduralSceneDataUrl;
-      await new Promise<void>((resolve, reject) => {
-        image.onload = () => resolve();
-        image.onerror = () => reject(new Error('Scene image could not be loaded'));
-      });
+      let aiImage: HTMLImageElement | null = null;
+      if (scene?.imageDataUrl) {
+        const image = new Image();
+        image.src = scene.imageDataUrl;
+        if (image.complete && image.naturalWidth > 0) aiImage = image;
+      }
 
-      const imageRatio = image.width / image.height;
-      const targetRatio = canvas.width / 710;
-      const cropWidth = imageRatio > targetRatio ? image.height * targetRatio : image.width;
-      const cropHeight = imageRatio > targetRatio ? image.height : image.width / targetRatio;
-      const cropX = (image.width - cropWidth) / 2;
-      const cropY = (image.height - cropHeight) / 2;
-      context.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, 710);
-      const fade = context.createLinearGradient(0, 470, 0, 760);
-      fade.addColorStop(0, 'rgba(16, 47, 45, 0)');
-      fade.addColorStop(1, '#102f2d');
-      context.fillStyle = fade;
-      context.fillRect(0, 460, canvas.width, 300);
+      const hasAiScene = aiImage !== null;
+      let contentStart = 180;
       context.fillStyle = '#102f2d';
-      context.fillRect(0, 710, canvas.width, 1210);
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      if (aiImage) {
+        const imageRatio = aiImage.width / aiImage.height;
+        const targetRatio = canvas.width / 710;
+        const cropWidth = imageRatio > targetRatio ? aiImage.height * targetRatio : aiImage.width;
+        const cropHeight = imageRatio > targetRatio ? aiImage.height : aiImage.width / targetRatio;
+        const cropX = (aiImage.width - cropWidth) / 2;
+        const cropY = (aiImage.height - cropHeight) / 2;
+        context.drawImage(aiImage, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, 710);
+        const fade = context.createLinearGradient(0, 470, 0, 760);
+        fade.addColorStop(0, 'rgba(16, 47, 45, 0)');
+        fade.addColorStop(1, '#102f2d');
+        context.fillStyle = fade;
+        context.fillRect(0, 460, canvas.width, 300);
+        context.fillStyle = '#102f2d';
+        context.fillRect(0, 710, canvas.width, 1210);
+        contentStart = 790;
+      } else {
+        const glow = context.createRadialGradient(820, 180, 10, 820, 180, 520);
+        glow.addColorStop(0, 'rgba(201, 169, 91, .24)');
+        glow.addColorStop(1, 'rgba(16, 47, 45, 0)');
+        context.fillStyle = glow;
+        context.fillRect(0, 0, canvas.width, 760);
+        context.strokeStyle = 'rgba(223, 207, 154, .22)';
+        context.lineWidth = 2;
+        for (let x = 60; x < canvas.width; x += 120) {
+          for (let y = 70; y < 690; y += 120) {
+            context.beginPath();
+            context.moveTo(x, y - 28);
+            context.lineTo(x + 28, y);
+            context.lineTo(x, y + 28);
+            context.lineTo(x - 28, y);
+            context.closePath();
+            context.stroke();
+          }
+        }
+      }
 
       context.fillStyle = '#dfcf9a';
       context.font = '600 24px "DM Sans", sans-serif';
-      context.fillText('RÜYA ÜZERİNE BİR YANSIMA', 72, 790);
+      context.fillText(hasAiScene ? 'RÜYA ÜZERİNE BİR YANSIMA' : 'MANEVİ YANSI MA', 72, hasAiScene ? 790 : 100);
       context.fillStyle = '#f4efdf';
       context.font = '600 38px "Playfair Display", Georgia, serif';
-      context.fillText('Rüyanın Hikmeti', 72, 860);
+      context.fillText('Rüyanın Hikmeti', 72, contentStart + 70);
 
-      let y = 910;
+      let y = contentStart + 120;
       context.fillStyle = '#d8c57f';
       context.font = '600 22px "DM Sans", sans-serif';
       context.fillText(username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Manevi yansıma', 72, y);
@@ -217,7 +243,7 @@ function Home() {
       }
     } catch (error) {
       if ((error as { name?: string })?.name !== 'AbortError') {
-        setShareFeedback('Kart oluşturulamadı. Lütfen sahne yüklendikten sonra yeniden deneyin.');
+        setShareFeedback('Kart oluşturulamadı. Lütfen yeniden deneyin.');
       }
     }
   };
