@@ -13,7 +13,6 @@ import {
   Clock3,
   Feather,
   MoonStar,
-  RotateCw,
   Sparkles,
   Sun,
   Sunrise,
@@ -42,6 +41,46 @@ type DreamInterpretation = {
   disclaimer: string;
 };
 type DreamScene = { imageDataUrl: string };
+
+const proceduralSceneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#102a39"/><stop offset=".58" stop-color="#145043"/><stop offset="1" stop-color="#1a5144"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#f3d98a" stop-opacity=".72"/><stop offset="1" stop-color="#e8c66e" stop-opacity="0"/></radialGradient>
+    <pattern id="geometry" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M60 4 116 60 60 116 4 60Z M60 28 92 60 60 92 28 60Z" fill="none" stroke="#e1c77a" stroke-opacity=".16" stroke-width="1.5"/><circle cx="60" cy="60" r="4" fill="#e1c77a" fill-opacity=".22"/></pattern>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#174a49"/><stop offset="1" stop-color="#142f41"/></linearGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#sky)"/>
+  <circle cx="650" cy="290" r="250" fill="url(#glow)"/>
+  <path d="M685 160a112 112 0 1 0 92 168 94 94 0 0 1-92-168Z" fill="#f0d88e" fill-opacity=".92"/>
+  <path d="M0 650 170 470l126 122 170-205 186 225 110-112 138 148v220H0Z" fill="#173b3b" fill-opacity=".8"/>
+  <path d="M0 740 184 612l140 112 163-162 184 166 114-94 115 94v200H0Z" fill="#1a493f"/>
+  <rect y="820" width="900" height="380" fill="url(#water)"/>
+  <path d="M105 872c140-25 265-20 392 4s214 25 322 1M34 938c176-20 297-13 442 11s259 19 389-5M96 1010c125-16 257-6 365 13s246 13 347-6M42 1090c154-13 257 0 393 15s262 7 402-8" fill="none" stroke="#ddc779" stroke-opacity=".42" stroke-width="3"/>
+  <path d="M0 0h900v1200H0z" fill="url(#geometry)" opacity=".6"/>
+  <path d="M165 820 450 335 735 820M260 820 450 494 640 820" fill="none" stroke="#dfc46f" stroke-opacity=".14" stroke-width="3"/>
+</svg>`;
+const proceduralSceneDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(proceduralSceneSvg)}`;
+
+function SceneVisual({ scene, className = '', loading = false, showLabel = true }: {
+  scene: DreamScene | null;
+  className?: string;
+  loading?: boolean;
+  showLabel?: boolean;
+}) {
+  return (
+    <div className={`scene-frame relative overflow-hidden rounded-2xl bg-[#183e38] ${className}`} data-testid="visual-ruya-sahnesi">
+      <img
+        src={scene?.imageDataUrl ?? proceduralSceneDataUrl}
+        alt="Sükûnetli bir manzara, ay ışığı ve altın geometrik desenlerle sembolik rüya sahnesi"
+        className="scene-image h-full w-full object-cover"
+        data-testid="img-ruya-sahnesi"
+      />
+      <div className="light-particles absolute inset-0" aria-hidden="true" />
+      {showLabel && <span className="absolute bottom-3 left-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4] backdrop-blur-sm">Sembolik sahne</span>}
+      {loading && <span className="absolute bottom-3 right-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4] backdrop-blur-sm">Görsel sahne hazırlanıyor</span>}
+    </div>
+  );
+}
 
 function Home() {
   const [mode, setMode] = useState<'reflection' | 'creator'>('reflection');
@@ -78,24 +117,15 @@ function Home() {
         setInterpretation(result);
         generateScene.mutate({ data: { scenePrompt: result.scenePrompt } }, {
           onSuccess: (generated) => setScene(generated),
-          onError: () => setRequestError('Sahne şu an oluşturulamadı. Yorumunuz hazır; sahneyi yeniden deneyebilirsiniz.'),
+          onError: () => setScene(null),
         });
       },
       onError: () => setRequestError('Yorumunuz şu an hazırlanamadı. Lütfen bağlantınızı kontrol edip yeniden deneyin.'),
     });
   };
 
-  const retryScene = () => {
-    if (!interpretation) return;
-    setRequestError('');
-    generateScene.mutate({ data: { scenePrompt: interpretation.scenePrompt } }, {
-      onSuccess: (generated) => setScene(generated),
-      onError: () => setRequestError('Sahne oluşturulamadı. Biraz sonra yeniden deneyebilirsiniz.'),
-    });
-  };
-
   const createAndShareCard = async () => {
-    if (!interpretation || !scene) return;
+    if (!interpretation) return;
     setShareFeedback('');
     try {
       const canvas = document.createElement('canvas');
@@ -105,7 +135,7 @@ function Home() {
       if (!context) throw new Error('Canvas context is unavailable');
 
       const image = new Image();
-      image.src = scene.imageDataUrl;
+      image.src = scene?.imageDataUrl ?? proceduralSceneDataUrl;
       await new Promise<void>((resolve, reject) => {
         image.onload = () => resolve();
         image.onerror = () => reject(new Error('Scene image could not be loaded'));
@@ -319,12 +349,6 @@ function Home() {
                   <CircleHelp size={15} className="mt-0.5 shrink-0" />{requestError}
                 </div>
               )}
-              {requestError && interpretation && (
-                <div role="alert" className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-[#e3c7b9] bg-[#fbf0ea] px-4 py-3 text-xs leading-5 text-[#814f3e]" data-testid="status-sahne-hatasi">
-                  <span>{requestError}</span>
-                  <button type="button" onClick={retryScene} disabled={generateScene.isPending} className="flex shrink-0 items-center gap-1 font-semibold underline underline-offset-2 disabled:opacity-50"><RotateCw size={13} /> Yeniden dene</button>
-                </div>
-              )}
               {interpretDream.isError && !requestError && (
                 <div role="alert" className="mt-5 rounded-xl border border-[#e3c7b9] bg-[#fbf0ea] px-4 py-3 text-xs leading-5 text-[#814f3e]">
                   Bir sorun oluştu. Bilgileriniz formda duruyor; yeniden gönderebilirsiniz.
@@ -352,11 +376,11 @@ function Home() {
               )}
               {busy && (
                 <div className="flex h-full min-h-[300px] flex-col justify-center gap-5" role="status" aria-live="polite" data-testid="status-yorum-yukleniyor">
-                  <div className="h-40 animate-pulse rounded-2xl bg-[#d8d8c9]" />
+                  <SceneVisual scene={null} className="h-[188px] shrink-0" />
                   <div className="h-4 w-2/3 animate-pulse rounded bg-[#d8d8c9]" />
                   <div className="h-3 w-full animate-pulse rounded bg-[#d8d8c9]" />
                   <div className="h-3 w-4/5 animate-pulse rounded bg-[#d8d8c9]" />
-                  <p className="text-center text-xs text-[#708076]">Rüyanız özenle ele alınıyor…</p>
+                  <p className="text-center text-xs text-[#708076]">Rüyanız özenle ele alınıyor; sahneniz hazırlanıyor…</p>
                 </div>
               )}
               {interpretation && mode === 'reflection' && (
@@ -371,15 +395,7 @@ function Home() {
                       <p className="text-[11px] leading-5 text-[#4b584c]">{nightmareAdvice}</p>
                     </div>
                   )}
-                  <div className="scene-frame relative overflow-hidden rounded-2xl bg-[#183e38]">
-                    {scene ? <img src={scene.imageDataUrl} alt="Rüyanızdan ilham alan sembolik sahne" className="scene-image h-[188px] w-full object-cover" data-testid="img-ruya-sahnesi" /> : (
-                      <div className="dream-scene flex h-[188px] items-center justify-center text-[#dfd0a0]">
-                        {generateScene.isPending ? <div className="flex flex-col items-center gap-3 text-[10px] tracking-wide"><div className="h-6 w-6 animate-pulse rounded-full border border-[#dbc98e] border-r-transparent" />Sahneniz hazırlanıyor</div> : <MoonStar size={38} strokeWidth={1} />}
-                      </div>
-                    )}
-                    <div className="light-particles absolute inset-0" aria-hidden="true" />
-                    <span className="absolute bottom-3 left-3 rounded-full bg-[#122e2a]/75 px-3 py-1 text-[9px] text-[#f4ecd4] backdrop-blur-sm">Sembolik sahne</span>
-                  </div>
+                  <SceneVisual scene={scene} className="h-[210px]" loading={generateScene.isPending} />
                   <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
                     <h3 className="serif text-[19px] text-[#1c4138]">Rüyanın Hikmeti &amp; Temel Semboller</h3>
                     <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.wisdom}</p>
@@ -414,7 +430,7 @@ function Home() {
               )}
               {interpretation && (
                 <div className="mt-5 border-t border-[#d9d2bf] pt-5">
-                  <button type="button" onClick={createAndShareCard} disabled={!scene} data-testid="button-manevi-kart-paylas" className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#173d35] px-5 text-[12px] font-semibold text-[#f6f1e3] transition-colors hover:bg-[#215349] disabled:cursor-wait disabled:opacity-60">
+                  <button type="button" onClick={createAndShareCard} data-testid="button-manevi-kart-paylas" className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#173d35] px-5 text-[12px] font-semibold text-[#f6f1e3] transition-colors hover:bg-[#215349]">
                     <MoonStar size={15} className="text-[#e2cc87]" /> Manevi Kart Oluştur &amp; Paylaş
                   </button>
                   {shareFeedback && <p className="mt-2 text-center text-[10px] text-[#617267]" role="status" data-testid="status-paylasim">{shareFeedback}</p>}
@@ -444,12 +460,7 @@ function CreatorPortrait({ dream, username, interpretation, scene, sceneLoading,
     <article className="portrait-frame relative flex w-full max-w-[310px] flex-col overflow-hidden rounded-[25px] border border-[#c8b477]/45 bg-[#102f2d] text-[#f4efdf] shadow-[0_16px_48px_-18px_rgba(16,43,39,.55)]" data-testid="card-dikey-paylasim">
       <div className="geometry absolute inset-0 opacity-25" />
       <div className="relative h-[37%] min-h-0 shrink-0 overflow-hidden">
-        {scene ? <img src={scene.imageDataUrl} alt="Rüyadan ilham alan sembolik sahne" className="scene-image h-full w-full object-cover" /> : (
-          <div className="dream-scene grid h-full w-full place-items-center text-[#dbc98e]">
-            {sceneLoading ? <div className="h-7 w-7 animate-pulse rounded-full border border-[#dbc98e] border-r-transparent" /> : <MoonStar size={48} strokeWidth={1} />}
-          </div>
-        )}
-        <div className="light-particles absolute inset-0" aria-hidden="true" />
+        <SceneVisual scene={scene} className="h-full rounded-none" loading={sceneLoading} showLabel={false} />
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#102f2d] to-transparent" />
         <div className="absolute bottom-3 left-5 right-5 flex items-center justify-between">
           <span className="text-[8px] font-semibold uppercase tracking-[.2em] text-[#dfcf9a]">Rüya üzerine bir yansıma</span>
