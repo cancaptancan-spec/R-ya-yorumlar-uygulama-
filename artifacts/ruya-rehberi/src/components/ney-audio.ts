@@ -23,10 +23,17 @@ export function createNeyAudioEngine(): NeyAudioEngine {
   const delaySend = context.createGain();
   delaySend.gain.value = 0.2;
   const mediaDestination = context.createMediaStreamDestination();
+  const compressor = context.createDynamicsCompressor();
+  compressor.threshold.value = -18;
+  compressor.knee.value = 18;
+  compressor.ratio.value = 4.5;
+  compressor.attack.value = 0.004;
+  compressor.release.value = 0.24;
 
   dryBus.connect(masterGain);
-  masterGain.connect(context.destination);
-  masterGain.connect(mediaDestination);
+  masterGain.connect(compressor);
+  compressor.connect(context.destination);
+  compressor.connect(mediaDestination);
 
   // Filtered, panned delay taps create a clean stereo ambience without noise samples.
   const addDelayTap = (seconds: number, pan: number, level: number) => {
@@ -198,7 +205,7 @@ export function createNeyAudioEngine(): NeyAudioEngine {
       if (context.state === 'closed') throw new Error('Ses motoru kullanılamıyor.');
       const now = context.currentTime;
       masterGain.gain.cancelScheduledValues(now);
-      masterGain.gain.setTargetAtTime(enabled ? 0.24 : 0, now, 0.18);
+      masterGain.gain.setTargetAtTime(enabled ? 0.9 : 0, now, 0.18);
     },
     async dispose() {
       if (disposed) return;

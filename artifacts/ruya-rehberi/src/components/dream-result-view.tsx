@@ -16,7 +16,7 @@ const creatorHandle = '@huzuryolculugu';
 const creatorProfileUrl = 'https://www.tiktok.com/@huzuryolculugu';
 const canvasWidth = 720;
 const canvasHeight = 1280;
-const storyDuration = 8000;
+const storyDuration = 16000;
 
 type SceneCopy = {
   symbol: string;
@@ -24,45 +24,79 @@ type SceneCopy = {
   wisdom: string;
 };
 
-function drawWrappedText(
+function wrapCanvasText(
   context: CanvasRenderingContext2D,
   text: string,
-  x: number,
-  y: number,
   maxWidth: number,
-  lineHeight: number,
-  maxLines: number,
-) {
+): string[] {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = '';
-  let truncated = false;
-
-  for (let index = 0; index < words.length; index += 1) {
-    const word = words[index];
-    const candidate = line ? `${line} ${word}` : word;
-    if (context.measureText(candidate).width > maxWidth && line) {
-      if (lines.length === maxLines - 1) {
+  for (const word of words) {
+    if (context.measureText(word).width <= maxWidth) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (context.measureText(candidate).width > maxWidth && line) {
         lines.push(line);
-        truncated = index < words.length - 1;
-        line = '';
-        break;
+        line = word;
+      } else {
+        line = candidate;
       }
+      continue;
+    }
+
+    if (line) {
       lines.push(line);
-      line = word;
-    } else {
-      line = candidate;
+      line = '';
+    }
+    for (const character of Array.from(word)) {
+      const candidate = `${line}${character}`;
+      if (context.measureText(candidate).width > maxWidth && line) {
+        lines.push(line);
+        line = character;
+      } else {
+        line = candidate;
+      }
     }
   }
-  if (line && lines.length < maxLines) lines.push(line);
-  if (truncated && lines.length) {
-    let lastLine = lines[lines.length - 1];
-    while (lastLine && context.measureText(`${lastLine}…`).width > maxWidth) {
-      lastLine = lastLine.slice(0, -1);
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawFittedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  top: number,
+  maxWidth: number,
+  maxHeight: number,
+  fontFamily: string,
+  fontWeight: number,
+  baseFontSize: number,
+  minimumFontSize: number,
+) {
+  let fontSize = baseFontSize;
+  let lineHeight = fontSize * 1.18;
+  let lines: string[] = [];
+  let fitted = false;
+
+  for (; fontSize >= minimumFontSize; fontSize -= 1) {
+    context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+    lines = wrapCanvasText(context, text, maxWidth);
+    lineHeight = fontSize * 1.18;
+    if (lines.length * lineHeight <= maxHeight) {
+      fitted = true;
+      break;
     }
-    lines[lines.length - 1] = `${lastLine.trimEnd()}…`;
   }
-  lines.forEach((lineText, index) => context.fillText(lineText, x, y + index * lineHeight));
+
+  if (!fitted) fontSize = minimumFontSize;
+  context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  lines = wrapCanvasText(context, text, maxWidth);
+  lineHeight = fontSize * 1.18;
+  if (lines.length * lineHeight > maxHeight && lines.length > 0) {
+    lineHeight = maxHeight / lines.length;
+  }
+  lines.forEach((lineText, index) => context.fillText(lineText, x, top + fontSize + index * lineHeight));
 }
 
 function paintScene(
@@ -141,10 +175,31 @@ function paintScene(
   context.fillText(phaseLabels[phase], sideInset, 920);
   context.fillStyle = '#f4efdf';
   context.font = '600 42px "Playfair Display", Georgia, serif';
-  drawWrappedText(context, copyText, sideInset, 978, canvasWidth - sideInset * 2, 54, 3);
+  drawFittedText(
+    context,
+    copyText,
+    sideInset,
+    966,
+    canvasWidth - sideInset * 2,
+    148,
+    '"Playfair Display", Georgia, serif',
+    600,
+    42,
+    18,
+  );
   context.fillStyle = 'rgba(239, 237, 221, .88)';
-  context.font = '400 23px "Plus Jakarta Sans", sans-serif';
-  drawWrappedText(context, subText, sideInset, 1125, canvasWidth - sideInset * 2, 34, 3);
+  drawFittedText(
+    context,
+    subText,
+    sideInset,
+    1120,
+    canvasWidth - sideInset * 2,
+    92,
+    '"Plus Jakarta Sans", sans-serif',
+    400,
+    23,
+    15,
+  );
   context.restore();
 
   context.textAlign = 'right';
