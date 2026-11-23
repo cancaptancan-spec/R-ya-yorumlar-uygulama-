@@ -1,0 +1,180 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dreams
+    description: Private dream interpretation and symbolic scene generation
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dreams/interpret:
+    post:
+      operationId: interpretDream
+      tags: [dreams]
+      summary: Interpret a dream with careful traditional context
+      description: >
+        Returns a non-deterministic, respectful reflection informed by traditional
+        Islamic dream literature. Dream text is not persisted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DreamInput"
+      responses:
+        "200":
+          description: Interpretation and a symbolic scene prompt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DreamInterpretation"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /dreams/scene:
+    post:
+      operationId: generateDreamScene
+      tags: [dreams]
+      summary: Generate a symbolic dream scene
+      description: Generates a serene, symbolic illustration without people or religious figures.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DreamSceneInput"
+      responses:
+        "200":
+          description: Generated scene as a temporary data URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DreamScene"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    DreamInput:
+      type: object
+      properties:
+        dream:
+          type: string
+          minLength: 10
+          maxLength: 12000
+        timeOfDream:
+          type: string
+          enum: [seher, gece, gunduz]
+        dreamType:
+          type: string
+          enum: [huzurlu, kabus, tekrarlayan]
+        username:
+          type: string
+          maxLength: 40
+      required: [dream, timeOfDream, dreamType]
+    DreamSceneInput:
+      type: object
+      properties:
+        scenePrompt:
+          type: string
+          minLength: 10
+          maxLength: 1200
+      required: [scenePrompt]
+    DreamSymbol:
+      type: object
+      properties:
+        symbol:
+          type: string
+        meaning:
+          type: string
+      required: [symbol, meaning]
+    DreamInterpretation:
+      type: object
+      properties:
+        wisdom:
+          type: string
+        symbols:
+          type: array
+          items:
+            $ref: "#/components/schemas/DreamSymbol"
+        detailedInterpretation:
+          type: string
+        dua:
+          type: string
+        asmaSuggestion:
+          type: string
+        dhikr:
+          type: string
+        nightmareAdvice:
+          type: ["string", "null"]
+        scenePrompt:
+          type: string
+        disclaimer:
+          type: string
+      required:
+        - wisdom
+        - symbols
+        - detailedInterpretation
+        - dua
+        - asmaSuggestion
+        - dhikr
+        - nightmareAdvice
+        - scenePrompt
+        - disclaimer
+    DreamScene:
+      type: object
+      properties:
+        imageDataUrl:
+          type: string
+      required: [imageDataUrl]
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+

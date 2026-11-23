@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Rüya Rehberi"
+description = "Türkçe İslami rüya tabiri ve manevi rehberlik uygulaması; rüyaları dikkatli ve geleneksel bağlamda yorumlar, sembolik sahne görselleri üretir ve içerik üreticileri için dikey paylaşım görünümü sunar."
+version = "1.0.0"
+id = "artifacts/ruya-rehberi"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20991
+
+[services.development]
+run = "pnpm --filter @workspace/ruya-rehberi run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ruya-rehberi", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ruya-rehberi/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20991"
+BASE_PATH = "/"
