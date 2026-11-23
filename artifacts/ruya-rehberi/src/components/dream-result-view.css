@@ -181,6 +181,20 @@
   text-align: center;
 }
 
+.dream-result-view__audio-attribution {
+  max-width: 100%;
+  margin: .35rem 0 0;
+  color: var(--result-muted);
+  font-size: .58rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.dream-result-view__audio-attribution a {
+  color: #e3cc8d;
+  text-underline-offset: 2px;
+}
+
 .dream-result-view__audio-status {
   width: 100%;
   margin: .1rem 0 0;

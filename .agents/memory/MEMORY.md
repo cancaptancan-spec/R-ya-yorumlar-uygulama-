@@ -1,1 +1,1 @@
-- [Dream artwork pipeline](local-dream-scene-rendering.md) — generate real dream art; mix noise-free Hicaz Oud/Ney into exports and stop audio on hide or exit.
+- [Dream artwork pipeline](local-dream-scene-rendering.md) — generate real dream art; stream an attributed Ney recording into exports and stop it on hide or exit.

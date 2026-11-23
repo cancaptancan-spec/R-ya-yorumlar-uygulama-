@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, BookOpenText, Check, Download, HeartHandshake, Share2, Sparkles, Video, Volume2, VolumeX } from 'lucide-react';
 import type { DreamInterpretation } from '@workspace/api-client-react';
-import { createNeyAudioEngine, type NeyAudioEngine } from '@/components/ney-audio';
 import './dream-result-view.css';
 
 type DreamResultViewProps = {
@@ -17,6 +16,14 @@ const creatorProfileUrl = 'https://www.tiktok.com/@huzuryolculugu';
 const canvasWidth = 720;
 const canvasHeight = 1280;
 const storyDuration = 16000;
+const neyAudioUrl = 'https://cdn.freesound.org/previews/195/195078_2065570-hq.mp3';
+const neyRecordingPage = 'https://freesound.org/people/gopalkoduri/sounds/195078/';
+const creativeCommonsLicense = 'https://creativecommons.org/licenses/by-nc/3.0/';
+
+type AudioCapturePipeline = {
+  context: AudioContext;
+  destination: MediaStreamAudioDestinationNode;
+};
 
 type SceneCopy = {
   symbol: string;
@@ -194,18 +201,26 @@ function paintScene(
     sideInset,
     1120,
     canvasWidth - sideInset * 2,
-    92,
+    78,
     '"Plus Jakarta Sans", sans-serif',
     400,
     23,
     15,
+  );
+  context.textAlign = 'center';
+  context.fillStyle = 'rgba(239, 237, 221, .78)';
+  context.font = '400 14px "Plus Jakarta Sans", sans-serif';
+  context.fillText(
+    'Ses: Hüseyni Saz Semaisi — gopalkoduri · CC BY-NC 3.0',
+    canvasWidth / 2,
+    canvasHeight - 72,
   );
   context.restore();
 
   context.textAlign = 'right';
   context.fillStyle = '#e5d08c';
   context.font = '600 19px "Plus Jakarta Sans", sans-serif';
-  context.fillText(creatorHandle, canvasWidth - sideInset, canvasHeight - 43);
+  context.fillText(creatorHandle, canvasWidth - sideInset, canvasHeight - 35);
   context.textAlign = 'left';
 }
 
@@ -242,8 +257,10 @@ export function DreamResultView({
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const animationOriginRef = useRef<number | null>(null);
-  const neyAudioRef = useRef<NeyAudioEngine | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioDestinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const firstSymbol = interpretation.symbols[0];
   const reflections = [
     interpretation.dua,
@@ -254,57 +271,120 @@ export function DreamResultView({
     wisdom: interpretation.wisdom,
   };
 
-  useEffect(() => {
-    const disposeAudioEngine = () => {
-      const engine = neyAudioRef.current;
-      neyAudioRef.current = null;
-      if (engine) void engine.dispose();
-    };
-    const pauseWhenHidden = () => {
-      if (!document.hidden) return;
-      setIsAudioEnabled(false);
-      const engine = neyAudioRef.current;
-      if (engine) void engine.pause().catch(() => undefined);
-    };
-    const stopWhenLeavingPage = () => {
-      setIsAudioEnabled(false);
-      disposeAudioEngine();
-    };
+  const getAudioCapturePipeline = (): AudioCapturePipeline => {
+    const audio = audioRef.current;
+    if (!audio) throw new Error('Ses kaynağı bulunamadı.');
+    if (audioContextRef.current && audioDestinationRef.current) {
+      return { context: audioContextRef.current, destination: audioDestinationRef.current };
+    }
 
-    document.addEventListener('visibilitychange', pauseWhenHidden);
-    window.addEventListener('pagehide', stopWhenLeavingPage);
-    window.addEventListener('beforeunload', stopWhenLeavingPage);
+    const windowWithWebkit = window as Window & { webkitAudioContext?: typeof AudioContext };
+    const AudioContextConstructor = window.AudioContext || windowWithWebkit.webkitAudioContext;
+    if (!AudioContextConstructor) {
+      throw new Error('Tarayıcınız ses kaydını desteklemiyor.');
+    }
 
-    return () => {
-      document.removeEventListener('visibilitychange', pauseWhenHidden);
-      window.removeEventListener('pagehide', stopWhenLeavingPage);
-      window.removeEventListener('beforeunload', stopWhenLeavingPage);
-      disposeAudioEngine();
-    };
-  }, []);
+    const context = new AudioContextConstructor();
+    const destination = context.createMediaStreamDestination();
+    audioContextRef.current = context;
+    audioDestinationRef.current = destination;
+    const source = context.createMediaElementSource(audio);
+    source.connect(context.destination);
+    source.connect(destination);
+    return { context, destination };
+  };
 
-  const getNeyAudioEngine = () => {
-    if (!neyAudioRef.current) neyAudioRef.current = createNeyAudioEngine();
-    return neyAudioRef.current;
+  const resetAudioElement = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    try {
+      audio.currentTime = 0;
+    } catch {
+      // The source may not have buffered enough media to seek yet.
+    }
   };
 
   const setNeyAudioEnabled = async (enabled: boolean) => {
     setAudioStatus('');
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = 1;
+    audio.loop = true;
+
+    if (!enabled) {
+      resetAudioElement();
+      setIsAudioEnabled(false);
+      const context = audioContextRef.current;
+      if (context?.state === 'running') void context.suspend().catch(() => undefined);
+      return;
+    }
+
     try {
-      if (!enabled && !neyAudioRef.current) {
-        setIsAudioEnabled(false);
-        return;
-      }
-      await getNeyAudioEngine().setEnabled(enabled);
-      setIsAudioEnabled(enabled);
+      const { context } = getAudioCapturePipeline();
+      const resume = context.state === 'running' ? Promise.resolve() : context.resume();
+      const playback = audio.play();
+      await Promise.all([resume, playback]);
+      setIsAudioEnabled(true);
     } catch (error) {
       setAudioStatus(error instanceof Error ? error.message : 'Ney sesi başlatılamadı.');
+      setIsAudioEnabled(false);
     }
   };
 
   const handlePlayerInteraction = () => {
     if (!isAudioEnabled) void setNeyAudioEnabled(true);
   };
+
+  useEffect(() => {
+    let active = true;
+    const audio = audioRef.current;
+    if (!audio) return undefined;
+    audio.volume = 1;
+    audio.loop = true;
+    void audio.play()
+      .then(() => {
+        if (active && !document.hidden) setIsAudioEnabled(true);
+      })
+      .catch(() => {
+        if (active && !document.hidden) setAudioStatus('Sesi açmak için rüya sahnesine dokunun.');
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const suspendAudio = () => {
+      const context = audioContextRef.current;
+      if (context?.state === 'running') void context.suspend().catch(() => undefined);
+    };
+    const stopAndResetAudio = () => {
+      resetAudioElement();
+      setIsAudioEnabled(false);
+      suspendAudio();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopAndResetAudio();
+    };
+    const handlePageExit = () => stopAndResetAudio();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageExit);
+    window.addEventListener('beforeunload', handlePageExit);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageExit);
+      window.removeEventListener('beforeunload', handlePageExit);
+      resetAudioElement();
+      audioDestinationRef.current?.stream.getTracks().forEach((track) => track.stop());
+      const context = audioContextRef.current;
+      audioContextRef.current = null;
+      audioDestinationRef.current = null;
+      if (context && context.state !== 'closed') void context.close().catch(() => undefined);
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -423,14 +503,22 @@ export function DreamResultView({
     setVideoStatus('Kısa video kaydediliyor…');
 
     try {
-      const audioEngine = getNeyAudioEngine();
-      await audioEngine.setEnabled(true);
+      const audio = audioRef.current;
+      if (!audio) throw new Error('Ney kaydı bulunamadı.');
+      audio.volume = 1;
+      audio.loop = true;
+      const audioPipeline = getAudioCapturePipeline();
+      const resumeAudio = audioPipeline.context.state === 'running'
+        ? Promise.resolve()
+        : audioPipeline.context.resume();
+      const playAudio = audio.play();
+      await Promise.all([resumeAudio, playAudio]);
       setIsAudioEnabled(true);
       setAudioStatus('');
       canvasStream = canvas.captureStream(30);
       const recordingStream = new MediaStream([
         ...canvasStream.getVideoTracks(),
-        ...audioEngine.mediaStream.getAudioTracks(),
+        ...audioPipeline.destination.stream.getAudioTracks(),
       ]);
       recorder = new MediaRecorder(recordingStream, { mimeType });
       const chunks: BlobPart[] = [];
@@ -475,6 +563,16 @@ export function DreamResultView({
 
   return (
     <section className="dream-result-view" aria-label="Rüya yansıması" data-testid="dream-result-view">
+      <audio
+        ref={audioRef}
+        crossOrigin="anonymous"
+        loop
+        preload="auto"
+        src={neyAudioUrl}
+        aria-hidden="true"
+        hidden
+        data-testid="audio-ney-recording"
+      />
       <div className="dream-result-view__visual">
         {interpretation.sceneImageDataUrl && !imageLoadFailed ? (
           <div className="dream-result-view__player">
@@ -510,6 +608,11 @@ export function DreamResultView({
         <span className="dream-result-view__handle" data-testid="text-creator-handle">
           {creatorHandle}
         </span>
+        <p className="dream-result-view__audio-attribution">
+          Kayıt: <a href={neyRecordingPage} target="_blank" rel="noopener noreferrer">Hüseyni Saz Semaisi (Ney icrası) — gopalkoduri</a>
+          {' · '}
+          <a href={creativeCommonsLicense} target="_blank" rel="noopener noreferrer">CC BY-NC 3.0</a>
+        </p>
         <div className="dream-result-view__downloads">
           <button
             className="dream-result-view__download dream-result-view__download--video"
