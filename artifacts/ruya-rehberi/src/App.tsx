@@ -12,7 +12,6 @@ import {
   CircleHelp,
   Clock3,
   Feather,
-  LockKeyhole,
   MoonStar,
   RotateCw,
   Sparkles,
@@ -52,8 +51,8 @@ function Home() {
   const [username, setUsername] = useState('');
   const [interpretation, setInterpretation] = useState<DreamInterpretation | null>(null);
   const [scene, setScene] = useState<DreamScene | null>(null);
-  const [expanded, setExpanded] = useState(false);
   const [requestError, setRequestError] = useState('');
+  const [shareFeedback, setShareFeedback] = useState('');
   const interpretDream = useInterpretDream();
   const generateScene = useGenerateDreamScene();
 
@@ -67,7 +66,7 @@ function Home() {
     setRequestError('');
     setInterpretation(null);
     setScene(null);
-    setExpanded(false);
+    setShareFeedback('');
     const input: DreamInput = {
       dream: cleanDream,
       timeOfDream,
@@ -93,6 +92,104 @@ function Home() {
       onSuccess: (generated) => setScene(generated),
       onError: () => setRequestError('Sahne oluşturulamadı. Biraz sonra yeniden deneyebilirsiniz.'),
     });
+  };
+
+  const createAndShareCard = async () => {
+    if (!interpretation || !scene) return;
+    setShareFeedback('');
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas context is unavailable');
+
+      const image = new Image();
+      image.src = scene.imageDataUrl;
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error('Scene image could not be loaded'));
+      });
+
+      const imageRatio = image.width / image.height;
+      const targetRatio = canvas.width / 710;
+      const cropWidth = imageRatio > targetRatio ? image.height * targetRatio : image.width;
+      const cropHeight = imageRatio > targetRatio ? image.height : image.width / targetRatio;
+      const cropX = (image.width - cropWidth) / 2;
+      const cropY = (image.height - cropHeight) / 2;
+      context.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, 710);
+      const fade = context.createLinearGradient(0, 470, 0, 760);
+      fade.addColorStop(0, 'rgba(16, 47, 45, 0)');
+      fade.addColorStop(1, '#102f2d');
+      context.fillStyle = fade;
+      context.fillRect(0, 460, canvas.width, 300);
+      context.fillStyle = '#102f2d';
+      context.fillRect(0, 710, canvas.width, 1210);
+
+      context.fillStyle = '#dfcf9a';
+      context.font = '600 24px "DM Sans", sans-serif';
+      context.fillText('RÜYA ÜZERİNE BİR YANSIMA', 72, 790);
+      context.fillStyle = '#f4efdf';
+      context.font = '600 38px "Playfair Display", Georgia, serif';
+      context.fillText('Rüyanın Hikmeti', 72, 860);
+
+      let y = 910;
+      context.fillStyle = '#d8c57f';
+      context.font = '600 22px "DM Sans", sans-serif';
+      context.fillText(username.trim() ? `@${username.trim().replace(/^@/, '')}` : 'Manevi yansıma', 72, y);
+      y += 38;
+      context.fillStyle = '#f4efdf';
+      context.font = '400 23px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, `“${dream}”`, 72, y, 936, 31, 4) + 30;
+      context.fillStyle = '#dfcf9a';
+      context.font = '600 23px "DM Sans", sans-serif';
+      context.fillText('Temel düşünce', 72, y);
+      y += 34;
+      context.fillStyle = '#f4efdf';
+      context.font = '400 22px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, interpretation.wisdom, 72, y, 936, 30, 4) + 26;
+      context.fillStyle = '#dfcf9a';
+      context.font = '600 23px "DM Sans", sans-serif';
+      context.fillText('Tabir üzerine', 72, y);
+      y += 34;
+      context.fillStyle = '#f4efdf';
+      context.font = '400 21px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, interpretation.detailedInterpretation, 72, y, 936, 29, 8) + 24;
+      context.fillStyle = '#dfcf9a';
+      context.font = '600 23px "DM Sans", sans-serif';
+      context.fillText('Dua', 72, y);
+      y += 34;
+      context.fillStyle = '#f4efdf';
+      context.font = '400 21px "DM Sans", sans-serif';
+      y = drawCanvasParagraph(context, interpretation.dua, 72, y, 936, 29, 3) + 22;
+      context.fillStyle = '#d8c57f';
+      context.font = '500 18px "DM Sans", sans-serif';
+      drawCanvasParagraph(context, `${interpretation.asmaSuggestion} ${interpretation.dhikr}`, 72, y, 936, 25, 3);
+      context.fillStyle = '#c4cbbb';
+      context.font = '400 16px "DM Sans", sans-serif';
+      context.fillText('Bu yansıma kesin bilgi veya dinî hüküm değildir.', 72, 1870);
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Card export failed')), 'image/png');
+      });
+      const file = new File([blob], 'manevi-ruya-karti.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Manevi Rüya Kartı' });
+        setShareFeedback('Manevi kart paylaşım menüsünde hazır.');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'manevi-ruya-karti.png';
+        link.click();
+        URL.revokeObjectURL(url);
+        setShareFeedback('Manevi kart cihazınıza indirildi.');
+      }
+    } catch (error) {
+      if ((error as { name?: string })?.name !== 'AbortError') {
+        setShareFeedback('Kart oluşturulamadı. Lütfen sahne yüklendikten sonra yeniden deneyin.');
+      }
+    }
   };
 
   const busy = interpretDream.isPending;
@@ -297,50 +394,30 @@ function Home() {
                       </div>
                     )}
                   </article>
-                  {!expanded ? (
-                    <>
-                      <article className="relative overflow-hidden rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                        <div className="pointer-events-none select-none blur-[3px] opacity-60" aria-hidden="true">
-                          <h3 className="serif text-[18px] text-[#1c4138]">İbn-i Şirin ve Nablusi Külliyatına Göre Detaylı Tabir</h3>
-                        <p className="mt-2 line-clamp-3 text-[11px] leading-5 text-[#52645a]">{interpretation.detailedInterpretation}</p>
-                        </div>
-                        <button type="button" onClick={() => setExpanded(true)} data-testid="button-detay-tabiri-ac" className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-[#b5a267] bg-[#ede5cd] px-4 py-3 text-[11px] font-semibold text-[#425747] transition-colors hover:bg-[#e5d9b5]"><LockKeyhole size={14} /> Detaylı Tabiri ve Animasyon Sahnesini Aç</button>
-                        <p className="mt-2 text-center text-[9px] text-[#898b7d]">Bu bir ödeme adımı değildir.</p>
-                      </article>
-                      <article className="relative overflow-hidden rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                        <div className="pointer-events-none select-none blur-[3px] opacity-60" aria-hidden="true">
-                          <h3 className="serif text-[18px] text-[#1c4138]">Size Özel Dua, Esmaül Hüsna ve Zikir Tavsiyesi</h3>
-                          <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-[#52645a]">{interpretation.dua} {interpretation.asmaSuggestion} {interpretation.dhikr}</p>
-                        </div>
-                        <button type="button" onClick={() => setExpanded(true)} data-testid="button-dua-zikir-ac" className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-[#b5a267] bg-[#ede5cd] px-4 py-3 text-[11px] font-semibold text-[#425747] transition-colors hover:bg-[#e5d9b5]"><LockKeyhole size={14} /> Detaylı Tabiri ve Animasyon Sahnesini Aç</button>
-                      </article>
-                    </>
-                  ) : (
-                    <>
-                      <article className="fade-up rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                        <div className="mb-2 flex items-center gap-2"><Check size={14} className="text-[#927c42]" /><h3 className="serif text-[18px] text-[#1c4138]">İbn-i Şirin ve Nablusi Külliyatına Göre Detaylı Tabir</h3></div>
-                        <p className="text-[12px] leading-[1.8] text-[#52645a]">{interpretation.detailedInterpretation}</p>
-                      </article>
-                      {dreamType === 'kabus' && (
-                        <article className="rounded-2xl border border-[#d7c596] bg-[#f3ecd9] p-4">
-                          <h3 className="serif text-[18px] text-[#57492c]">Kâbus Sonrası Tavsiye</h3>
-                          <p className="mt-2 text-[11px] leading-5 text-[#5f624f]">{nightmareAdvice}</p>
-                        </article>
-                      )}
-                      <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
-                        <h3 className="serif text-[18px] text-[#1c4138]">Size Özel Dua, Esmaül Hüsna ve Zikir Tavsiyesi</h3>
-                        <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.dua}</p>
-                        <p className="mt-3 border-t border-[#ded8c8] pt-3 text-[11px] leading-5 text-[#68766c]">{interpretation.asmaSuggestion}</p>
-                        <p className="mt-3 border-t border-[#ded8c8] pt-3 text-[11px] leading-5 text-[#68766c]">{interpretation.dhikr}</p>
-                      </article>
-                    </>
-                  )}
+                  <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
+                    <h3 className="serif text-[18px] text-[#1c4138]">İbn-i Şirin ve İmam Nablusi Külliyatına Göre Tabiri</h3>
+                    <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.detailedInterpretation}</p>
+                  </article>
+                  <article className="rounded-2xl border border-[#d8d0bc] bg-[#f7f4e9] p-4">
+                    <h3 className="serif text-[18px] text-[#1c4138]">Manevi Tavsiye, Dua ve Esmaül Hüsna Önerisi</h3>
+                    <p className="mt-2 text-[12px] leading-[1.8] text-[#52645a]">{interpretation.dua}</p>
+                    <p className="mt-3 border-t border-[#ded8c8] pt-3 text-[11px] leading-5 text-[#68766c]">{interpretation.asmaSuggestion}</p>
+                    <p className="mt-3 border-t border-[#ded8c8] pt-3 text-[11px] leading-5 text-[#68766c]">{interpretation.dhikr}</p>
+                  </article>
                   <p className="flex gap-2 px-1 text-[10px] leading-5 text-[#7d877d]"><CircleHelp size={13} className="mt-0.5 shrink-0" />{interpretation.disclaimer}</p>
                 </div>
               )}
               {interpretation && mode === 'creator' && (
                 <div className="fade-up flex justify-center" data-testid="panel-tiktok-yorumu">
                   <CreatorPortrait dream={dream} username={username} interpretation={interpretation} scene={scene} sceneLoading={generateScene.isPending} nightmare={dreamType === 'kabus' ? nightmareAdvice : null} />
+                </div>
+              )}
+              {interpretation && (
+                <div className="mt-5 border-t border-[#d9d2bf] pt-5">
+                  <button type="button" onClick={createAndShareCard} disabled={!scene} data-testid="button-manevi-kart-paylas" className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#173d35] px-5 text-[12px] font-semibold text-[#f6f1e3] transition-colors hover:bg-[#215349] disabled:cursor-wait disabled:opacity-60">
+                    <MoonStar size={15} className="text-[#e2cc87]" /> Manevi Kart Oluştur &amp; Paylaş
+                  </button>
+                  {shareFeedback && <p className="mt-2 text-center text-[10px] text-[#617267]" role="status" data-testid="status-paylasim">{shareFeedback}</p>}
                 </div>
               )}
             </div>

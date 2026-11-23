@@ -86,7 +86,25 @@ router.post("/dreams/scene", async (req, res): Promise<void> => {
 
   try {
     const prompt = `Create a serene, symbolic dream illustration in an atmospheric painterly style. ${input.data.scenePrompt} Use deep emerald, midnight navy, and soft antique-gold light, subtle Islamic geometric motifs only as abstract ornament. Landscape and symbolic objects only. Absolutely no people, human faces, prophets, religious figures, sacred text, letters, or calligraphy. No text in the image. Cinematic portrait composition, 9:16 framing, gentle mist, soft light, peaceful and respectful.`;
-    const image = await generateImageBuffer(prompt, "1024x1536");
+    let image: Buffer;
+    try {
+      image = await generateImageBuffer(prompt, "1024x1536");
+    } catch (primaryError) {
+      const providerError = primaryError as { status?: number; code?: string; message?: string } | null;
+      const modelUnavailable =
+        providerError?.status === 400 &&
+        providerError.code === "invalid_value" &&
+        providerError.message?.includes("model");
+      if (!modelUnavailable) throw primaryError;
+
+      const fallback = await openai.images.generate({
+        model: "dall-e-3",
+        prompt,
+        size: "1024x1792",
+        response_format: "b64_json",
+      });
+      image = Buffer.from(fallback.data?.[0]?.b64_json ?? "", "base64");
+    }
     if (!image.length) {
       req.log.error("AI returned an empty dream scene");
       res.status(502).json({ error: "Sahne şu anda oluşturulamadı. Lütfen yeniden deneyin." });
