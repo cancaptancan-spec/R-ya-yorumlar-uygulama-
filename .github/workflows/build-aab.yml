@@ -25,11 +25,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      
-
-
       - name: Install Android build packages
-        run: sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+        run: |
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          yes | sdkmanager --licenses || true
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Configure Bubblewrap toolchain
         run: |
@@ -113,3 +113,4 @@ jobs:
       - name: Remove temporary keystore
         if: always()
         run: rm -f "$ANDROID_KEYSTORE_PATH"
+        
