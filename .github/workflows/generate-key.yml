@@ -1,0 +1,38 @@
+name: Generate Keystore
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Generate Keystore and Base64
+        run: |
+          keytool -genkeypair -v \
+            -keystore ruya-upload-keystore.jks \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -alias ruya-alias \
+            -storepass "Ruya2026!" \
+            -keypass "Ruya2026!" \
+            -dname "CN=Manevi Ruya Rehberi, OU=Mobile, O=ManeviRuya, L=Istanbul, S=Istanbul, C=TR"
+
+          base64 -w 0 ruya-upload-keystore.jks > keystore_base64.txt
+
+      - name: Upload Keystore Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: gizli-imza-anahtari
+          path: |
+            ruya-upload-keystore.jks
+            keystore_base64.txt
+          retention-days: 1
+          
